@@ -1,0 +1,231 @@
+﻿@model elbanna.Models.ViewModels.UserPermissionsVM
+@{
+    Layout = null;
+}
+
+<style>
+    body {
+        font-family: Tahoma;
+        background: #e6f5d0;
+        direction: rtl;
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .topbar {
+        background: #dff2c8;
+        border-bottom: 1px solid #9bbb59;
+        padding: 6px;
+        display: flex;
+        gap: 6px;
+    }
+
+        .topbar button {
+            border: 1px solid #9bbb59;
+            background: #fff;
+            padding: 4px 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+    .tabs {
+        background: #f3fbe8;
+        padding: 6px;
+        display: flex;
+        gap: 6px;
+        border-bottom: 1px solid #9bbb59;
+    }
+
+    .tab-btn {
+        border: 1px solid #9bbb59;
+        background: #fff;
+        padding: 4px 12px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+        .tab-btn.active {
+            background: #cfe8b6;
+        }
+
+    .tab-content {
+        padding: 10px;
+    }
+
+    .bulk-actions {
+        margin-bottom: 6px;
+    }
+
+        .bulk-actions button {
+            border: 1px solid #9bbb59;
+            background: #fff;
+            padding: 3px 10px;
+            margin-left: 6px;
+            cursor: pointer;
+        }
+
+    .perm-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+    }
+
+        .perm-table th, .perm-table td {
+            border: 1px solid #9bbb59;
+            padding: 6px;
+            text-align: center;
+        }
+
+        .perm-table th {
+            background: #cfe8b6;
+        }
+
+        .perm-table tbody tr:hover {
+            background: #edf6e3;
+        }
+
+    .msg {
+        margin: 10px;
+        border: 1px solid #9bbb59;
+        background: #f3fbe8;
+        padding: 8px;
+        font-weight: bold;
+    }
+
+    .msg-error {
+        border-color: #b94a48;
+        background: #f2dede;
+    }
+</style>
+
+<form method="post" action="@Url.Action("SavePermissions","Users")" onsubmit="return confirmSavePerm();">
+
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" asp-for="UserId" />
+
+    <div class="topbar">
+        <button type="submit">حفظ</button>
+
+        <!-- ✅ يرجع لنفس المستخدم (زي الديسكتوب) + Confirm -->
+        <button type="button" onclick="return confirmClosePerm('@Url.Action("Form", "Users", new { id = Model.UserId })');">
+            غلق
+        </button>
+    </div>
+
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="msg">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="msg msg-error">@TempData["Error"]</div>
+    }
+
+    <div class="tabs">
+        <button type="button" class="tab-btn active" onclick="showTab('screensTab', this)">صلاحيات الشاشات</button>
+        <button type="button" class="tab-btn" onclick="showTab('sitesTab', this)">صلاحيات المواقع</button>
+    </div>
+
+    <div id="screensTab" class="tab-content">
+        <div class="bulk-actions">
+            <button type="button" onclick="checkAll('screensTab', true)">تحديد كل الشاشات</button>
+            <button type="button" onclick="checkAll('screensTab', false)">إلغاء التحديد</button>
+        </div>
+
+        <table class="perm-table">
+            <thead>
+                <tr>
+                    <th>الشاشة</th>
+                    <th>إضافة</th>
+                    <th>تعديل</th>
+                    <th>حذف</th>
+                    <th>طباعة</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.Screens.Count; i++)
+                {
+                    <tr>
+                        <td>@Model.Screens[i].Name</td>
+                        <td><input asp-for="Screens[i].CanAdd" type="checkbox" /></td>
+                        <td><input asp-for="Screens[i].CanEdit" type="checkbox" /></td>
+                        <td><input asp-for="Screens[i].CanDelete" type="checkbox" /></td>
+                        <td><input asp-for="Screens[i].CanPrint" type="checkbox" /></td>
+
+                        <input type="hidden" asp-for="Screens[i].RefId" />
+                        <input type="hidden" asp-for="Screens[i].Name" />
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div id="sitesTab" class="tab-content" style="display:none">
+        <div class="bulk-actions">
+            <button type="button" onclick="checkAll('sitesTab', true)">تحديد كل المواقع</button>
+            <button type="button" onclick="checkAll('sitesTab', false)">إلغاء التحديد</button>
+        </div>
+
+        <table class="perm-table">
+            <thead>
+                <tr>
+                    <th>الموقع</th>
+                    <th>إضافة</th>
+                    <th>تعديل</th>
+                    <th>حذف</th>
+                    <th>طباعة</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.CostCenters.Count; i++)
+                {
+                    <tr>
+                        <td>@Model.CostCenters[i].Name</td>
+                        <td><input asp-for="CostCenters[i].CanAdd" type="checkbox" /></td>
+                        <td><input asp-for="CostCenters[i].CanEdit" type="checkbox" /></td>
+                        <td><input asp-for="CostCenters[i].CanDelete" type="checkbox" /></td>
+                        <td><input asp-for="CostCenters[i].CanPrint" type="checkbox" /></td>
+
+                        <input type="hidden" asp-for="CostCenters[i].RefId" />
+                        <input type="hidden" asp-for="CostCenters[i].Name" />
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function showTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.getElementById(tabId).style.display = 'block';
+
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function checkAll(containerId, value) {
+            const container = document.getElementById(containerId);
+            container.querySelectorAll("input[type=checkbox]").forEach(c => c.checked = value);
+        }
+            function confirmSavePerm() {
+            return confirm("تأكيد الحفظ؟");
+        }
+
+        function confirmClosePerm(url) {
+            // نفس رسالة الديسكتوب لإلغاء أي تعديل
+            if (confirm("تأكيد إلغاء اي تعديل؟")) {
+                location.href = url;
+            }
+            return false;
+        }
+
+        (function () {
+            if (window.location.hash === "#sites") {
+                const btn = document.querySelectorAll('.tab-btn')[1];
+                showTab('sitesTab', btn);
+            }
+        })();
+    </script>
+</form>

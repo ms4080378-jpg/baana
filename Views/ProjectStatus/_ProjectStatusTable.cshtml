@@ -1,0 +1,20 @@
+﻿@model elbanna.Models.ViewModels.ProjectStatusPageVM
+<table class="status-grid">
+    @await Html.PartialAsync("_ProjectStatusHeader", Model)
+    <tbody>
+        @foreach (var row in Model.Rows)
+        {
+            <tr>
+                <td>@row.BuildingNo</td>
+                <td>@row.Item</td>
+                <td>@row.Dealer</td>
+                @foreach (var f in Model.Floors)
+                {
+                    <td>@(row.Floors.ContainsKey(f) ? row.Floors[f] : 0)</td>
+                }
+                <td class="total">@row.Total</td>
+                <td class="required">@row.Required</td>
+            </tr>
+        }
+    </tbody>
+</table>

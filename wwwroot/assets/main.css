@@ -1,0 +1,302 @@
+﻿
+body {
+    font-family: Tahoma;
+    direction: rtl;
+    background: #e6f5d0;
+    font-size: 13px;
+    margin: 0;
+}
+
+.topbar {
+    background: #dff2c8;
+    border-bottom: 1px solid #9bbb59;
+    padding: 6px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+    .topbar button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+.row {
+    display: flex;
+    gap: 10px;
+    margin: 6px 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+label {
+    font-weight: bold;
+    min-width: 90px;
+}
+
+input, select, textarea {
+    padding: 4px;
+    width: 160px;
+}
+
+textarea {
+    width: 420px;
+    height: 55px;
+}
+
+.settings-menu {
+    position: relative;
+}
+
+.settings-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #e6f5d0;
+    border: 1px solid #9bbb59;
+    min-width: 180px;
+    z-index: 9999;
+}
+
+    .settings-dropdown div {
+        padding: 6px 10px;
+        cursor: pointer;
+        border-bottom: 1px solid #c5d9a5;
+    }
+
+        .settings-dropdown div:hover {
+            background: #cfe8b6;
+        }
+
+
+
+#dailyTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* منع Scroll الصفحة */
+body {
+    margin: 0;
+    overflow: hidden;
+}
+
+/* الحاوية الخاصة بالجدول */
+.table-wrapper {
+    height: calc(100vh - 250px); /* ⬅️ خليته أعلى شوية */
+    width: 100%;
+    overflow-x: auto; /* ✅ شريط يمين/شمال */
+    overflow-y: auto; /* ✅ شريط فوق/تحت */
+    border: 1px solid #9bbb59;
+    background: #fff;
+}
+
+
+
+/* الجدول */
+#dailyTable {
+    min-width: 2200px; /* ✅ يجبر ظهور الشريط الأفقي */
+    border-collapse: collapse;
+}
+
+
+    /* الخلايا */
+    #dailyTable th,
+    #dailyTable td {
+        border: 1px solid #ccc;
+        padding: 4px;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    /* الهيدر ثابت */
+    #dailyTable thead th {
+        position: sticky;
+        top: 0;
+        background: #f2f2f2;
+        z-index: 2;
+    }
+
+    /* صفوف الجدول */
+    #dailyTable tbody tr {
+        cursor: pointer;
+    }
+
+        /* الصف المختار */
+        #dailyTable tbody tr.selected-row {
+            background: #2b78e4 !important;
+            color: #fff;
+        }
+
+    /* الفوتر ثابت */
+    #dailyTable tfoot td {
+        background: #e6e6e6;
+        font-weight: bold;
+        position: sticky;
+        bottom: 0;
+        z-index: 1;
+    }
+
+
+input[list] {
+    width: 220px;
+    padding: 6px;
+    border: 1px solid #9bbb59;
+    background-color: #f6ffe9;
+    font-weight: bold;
+}
+
+    input[list]:focus {
+        outline: none;
+        border-color: #6aa84f;
+        background-color: #ffffff;
+    }
+/* صف البحث */
+.search-row th {
+    padding: 2px;
+    background: #fafafa;
+    position: sticky;
+    top: 28px; /* تحت الهيدر مباشرة */
+    z-index: 2;
+}
+
+.search-row input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 3px;
+    font-size: 12px;
+    border: 1px solid #bbb;
+    text-align: center;
+}
+
+input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* الشكل الأساسي */
+.done-check {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #1565c0;
+}
+
+    /* لما يكون متعلم */
+    .done-check:checked {
+        accent-color: #2e7d32;
+    }
+/* مربع الصرف */
+.spend-check {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #9e9e9e; /* افتراضي */
+}
+
+    /* لو مصروف */
+    .spend-check:checked {
+        accent-color: #2e7d32; /* أخضر = مصروف */
+    }
+
+
+/* تحسين شريط الأدوات */
+.topbar {
+    background: #dff2c8;
+    border-bottom: 1px solid #9bbb59;
+    padding: 6px;
+    display: flex;
+    /* التعديل هنا: نجعله يبدأ من اليسار */
+    justify-content: flex-start;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+    /* تنسيق الأزرار لتشبه الصورة */
+    /* أزرار مربعات */
+    .topbar button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        height: 34px; /* ارتفاع ثابت */
+        min-width: 90px; /* عرض ثابت/مناسب للنص */
+        padding: 0 10px;
+        background: #f6ffe9;
+        border: 1px solid #9bbb59;
+        border-radius: 0; /* ⬅️ مربع (بدون تدوير) */
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 13px;
+        color: #1f2d16;
+    }
+
+        .topbar button:hover {
+            background: #eaf7d9;
+            border-color: #6aa84f;
+        }
+
+        .topbar button:active {
+            transform: translateY(1px);
+            background: #dff2c8;
+        }
+
+/* لو عايز زرار غلق مختلف شوية */
+button[onclick*="closePage"] {
+    background: #ffe9e9;
+    border-color: #cc7a7a;
+}
+
+    button[onclick*="closePage"]:hover {
+        background: #ffd6d6;
+    }
+
+
+    /* تخصيص أيقونات لكل زر بناءً على النص (أمثلة) */
+    button[onclick*="closePage"]::before {
+        content: '❌';
+    }
+
+button[onclick*="loadDaily"]::before {
+    content: '📋';
+}
+
+button[onclick*="newEntry"]::before {
+    content: '📄';
+}
+
+button[onclick*="save"]::before {
+    content: '💾';
+}
+
+button[onclick*="editSelected"]::before {
+    content: '✏️';
+}
+
+button[onclick*="toggleSpend"]::before {
+    content: '💵';
+}
+
+button[onclick*="toggleReview"]::before {
+    content: '🔎';
+}
+
+button[onclick*="deleteRow"]::before {
+    content: '🗑️';
+}
+
+button[onclick*="toggleSettings"]::before {
+    content: '⚙️';
+}
+
+button[onclick*="exportExcel"]::before {
+    content: '📊';
+}

@@ -1,0 +1,322 @@
+﻿@model YourProject.Models.ViewModels.InspectVM
+@{
+    ViewData["Title"] = "مقايسة الموقع";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>مقايسة الموقع</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background-color: #e6f5d0;
+            color: black;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Toolbar */
+        .topbar {
+            background: #dff2c8;
+            border-bottom: 2px solid #9bbb59;
+            padding: 5px 10px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .topbar button, .topbar a {
+                background: linear-gradient(to bottom, #ffffff 0%, #f3f9eb 100%);
+                border: 1px solid #9bbb59;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 13px;
+                color: black;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                border-radius: 4px;
+                transition: 0.2s;
+                text-decoration: none;
+            }
+
+                .topbar button:hover, .topbar a:hover {
+                    background: #eaf7d9;
+                    border-color: #6aa84f;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .topbar button:active {
+                    transform: translateY(1px);
+                }
+
+            .topbar .btn-close {
+                color: #cc0000;
+            }
+
+            .topbar .btn-save {
+                color: #2e7d32;
+            }
+
+            .topbar .btn-new {
+                color: #1565c0;
+            }
+
+        /* Entry Section */
+        .section-container {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: #f4fbe9;
+            border: 1px dashed #9bbb59;
+            border-radius: 4px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: bold;
+            color: black;
+            min-width: 60px;
+        }
+
+        input, select {
+            border: 1px solid #9bbb59;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: Tahoma;
+            font-size: 13px;
+            color: black;
+            background-color: white;
+        }
+
+            input:focus, select:focus {
+                outline: none;
+                border-color: #4a6125;
+                box-shadow: 0 0 4px rgba(155, 187, 89, 0.3);
+            }
+
+        /* Table Grid */
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            margin: 10px;
+            border: 1px solid #9bbb59;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 100%);
+            border: 1px solid #ccc;
+            padding: 8px;
+            z-index: 10;
+            font-weight: bold;
+            color: black;
+            text-align: center;
+            border-bottom: 2px solid #9bbb59;
+        }
+
+        td {
+            border: 1px solid #eee;
+            padding: 6px;
+            text-align: center;
+            color: black;
+            white-space: nowrap;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fcfdfa;
+        }
+
+        tr:hover {
+            background-color: #f1f8e9;
+        }
+
+        .error-msg {
+            color: red;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        const PERMS = {
+            add: @(((ViewBag.CanAdd ?? false)).ToString().ToLower()),
+            edit: @(((ViewBag.CanEdit ?? false)).ToString().ToLower()),
+            print: @(((ViewBag.CanPrint ?? false)).ToString().ToLower()),
+            delete: @(((ViewBag.CanDelete ?? false)).ToString().ToLower())
+        };
+    </script>
+
+    <div class="topbar">
+        <button type="button" id="btnSave" class="btn-save"><span>💾</span> حفظ</button>
+        <button type="button" id="btnShowList" class="btn-new" style="color: #000;"><span>📋</span> عرض القائمة</button>
+        <a asp-action="Index" class="btn-new"><span>📄</span> جديد</a>
+        <a href="javascript:history.back()" class="btn-close"><span>❌</span> إغلاق</a>
+    </div>
+
+    <form asp-action="Save" method="post" id="inspectForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" id="Id" />
+
+        <div class="section-container">
+            <div class="row-inputs">
+                <div class="field-group">
+                    <label>الموقع</label>
+                    <select asp-for="CostCenterId" id="CostCenterId" asp-items="Model.CostCenters" style="width: 250px;">
+                        <option value="">-- اختر الموقع --</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>الصنف</label>
+                    <select asp-for="ItemId" id="ItemId" asp-items="Model.Items" style="width: 250px;">
+                        <option value="">-- اختر الصنف --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row-inputs">
+                <div class="field-group">
+                    <label>المبنى</label>
+                    <input asp-for="Building" id="Building" style="width: 80px;" />
+                </div>
+                <div class="field-group">
+                    <label>الدور</label>
+                    <input asp-for="Floor" id="Floor" style="width: 80px;" />
+                </div>
+                <div class="field-group">
+                    <label>الوحدة</label>
+                    <input asp-for="Unit" id="Unit" style="width: 80px;" />
+                </div>
+                <div class="field-group">
+                    <label>الكمية</label>
+                    <input asp-for="Qty" id="Qty" type="number" min="1" style="width: 100px;" />
+                </div>
+            </div>
+
+            @foreach (var e in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <div class="error-msg">@e.ErrorMessage</div>
+            }
+        </div>
+    </form>
+
+    <div class="table-wrapper">
+        <table id="inspectTable">
+            <thead>
+                <tr>
+                    <th>الصنف</th>
+                    <th>الموقع</th>
+                    <th>المبنى</th>
+                    <th>الدور</th>
+                    <th>الوحدة</th>
+                    <th>الكمية</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="6">لا توجد بيانات</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function safe(v) { return v === null || v === undefined ? "" : v; }
+
+        document.getElementById("btnShowList").addEventListener("click", function () {
+            if (!PERMS.print) { alert("غير مسموح لك بعرض القائمة"); return; }
+            const ccId = document.getElementById("CostCenterId").value;
+            if (!ccId) { alert("من فضلك اختر الموقع أولاً"); return; }
+
+            const tbody = document.querySelector("#inspectTable tbody");
+            tbody.innerHTML = "<tr><td colspan='6'>جاري التحميل...</td></tr>";
+
+            fetch(`/Inspect/GetList?costCenterId=${ccId}`)
+                .then(res => res.json())
+                .then(data => {
+                    tbody.innerHTML = "";
+                    if (!data || data.length === 0) {
+                        tbody.innerHTML = "<tr><td colspan='6'>لا توجد بيانات</td></tr>";
+                        return;
+                    }
+                    data.forEach(r => {
+                        tbody.insertAdjacentHTML("beforeend", `
+                            <tr>
+                                <td>${safe(r.item)}</td>
+                                <td>${safe(r.costCenter)}</td>
+                                <td>${safe(r.building)}</td>
+                                <td>${safe(r.floor)}</td>
+                                <td>${safe(r.unit)}</td>
+                                <td style="font-weight:bold">${safe(r.qty)}</td>
+                            </tr>
+                        `);
+                    });
+                });
+        });
+
+        document.getElementById("btnSave").addEventListener("click", function () {
+            const idVal = document.getElementById("Id").value;
+            const isNew = !idVal || idVal === "0";
+            if (isNew && !PERMS.add) { alert("غير مسموح لك بالحفظ"); return; }
+            if (!isNew && !PERMS.edit) { alert("غير مسموح لك بالتعديل"); return; }
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            const itemId = document.getElementById("ItemId").value;
+            const costCenterId = document.getElementById("CostCenterId").value;
+            const qty = document.getElementById("Qty").value;
+
+            if (!itemId || !costCenterId || !qty || qty <= 0) { alert("يرجى إكمال البيانات المطلوبة"); return; }
+            if (!confirm("تأكيد الحفظ؟")) return;
+
+            const btn = this; btn.disabled = true;
+            fetch("/Inspect/Save", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "RequestVerificationToken": token },
+                body: JSON.stringify({
+                    Id: Number(idVal) || 0,
+                    ItemId: Number(itemId),
+                    CostCenterId: Number(costCenterId),
+                    Building: document.getElementById("Building").value.trim(),
+                    Floor: document.getElementById("Floor").value.trim(),
+                    Unit: document.getElementById("Unit").value.trim(),
+                    Qty: Number(qty)
+                })
+            }).then(res => {
+                if(res.ok) { alert("تم الحفظ بنجاح"); document.getElementById("btnShowList").click(); }
+                else alert("حدث خطأ أثناء الحفظ");
+            }).finally(() => btn.disabled = false);
+        });
+    </script>
+</body>
+</html>

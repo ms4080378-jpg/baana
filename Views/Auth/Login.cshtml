@@ -1,0 +1,259 @@
+﻿@model elbanna.ViewModels.LoginVM
+@{
+    Layout = "_LoginLayout";
+    ViewData["Title"] = "Icons CODE | تسجيل الدخول";
+}
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    .top-bar {
+        height: 38px;
+        background: linear-gradient(to bottom, #aecceb, #8db1d9);
+        border-bottom: 1px solid #9db7d6;
+        position: relative;
+        flex-shrink: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 1px;
+    }
+
+        .top-bar .title {
+            font-weight: bold;
+            color: #333;
+            margin-right: 15px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+            .top-bar .title::after {
+                content: "";
+                display: inline-block;
+                width: 10px;
+                height: 10px;
+                background-color: #e67e22;
+                border: 1px solid #c0392b;
+            }
+
+    .close-btn {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(to bottom, #f0f7ff, #d9e9ff);
+        border: 1px solid #b0c9e8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #555;
+        font-family: Arial, sans-serif;
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+    .main {
+        flex: 1;
+        display: flex;
+        background-color: #e5f7c3;
+    }
+
+    /* ===== Left Side (Logo) ===== */
+    .left {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .logo {
+        text-align: left;
+        direction: ltr;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+        .logo .icon {
+            display: flex;
+            align-items: center;
+            gap: 0px;
+            margin-bottom: 0px;
+        }
+
+    .logo-graphics {
+        position: relative;
+        width: 80px;
+        height: 120px;
+    }
+
+    .crescent {
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+    }
+
+        .crescent.gray {
+            border-left: 12px solid #d6d6d6;
+            left: -30px;
+            top: 20px;
+            height: 80px;
+            transform: rotate(15deg);
+        }
+
+        .crescent.yellow {
+            border-left: 15px solid #d4c600;
+            left: -10px;
+            top: 0px;
+            height: 120px;
+            width: 100px;
+            transform: rotate(10deg);
+        }
+
+    .logo-text {
+        font-size: 56px;
+        font-weight: 800;
+        color: #d4c600;
+        line-height: 0.85;
+        margin-left: -10px;
+        letter-spacing: -1px;
+        font-family: sans-serif;
+    }
+
+        .logo-text span {
+            display: block;
+            color: #cfcfcf;
+            font-weight: bold;
+        }
+
+    .logo small {
+        color: #999;
+        font-size: 14px;
+        margin-left: 60px;
+        margin-top: -5px;
+        font-weight: bold;
+    }
+
+    /* ===== Right Side (Form) ===== */
+    .right {
+        flex: 1;
+        padding: 70px 80px;
+        direction: rtl;
+    }
+
+    .row {
+        width: 420px;
+        margin-bottom: 25px;
+        text-align: right;
+    }
+
+        .row label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .row input {
+            width: 100%;
+            height: 32px;
+            border: 1px solid #9bbb59;
+            padding: 5px 8px;
+            font-size: 13px;
+            background-color: white;
+        }
+
+    .buttons {
+        width: 420px;
+        margin-top: 35px;
+        display: flex;
+        gap: 20px;
+    }
+
+        .buttons button {
+            flex: 1;
+            height: 38px;
+            border: 1px solid #9bbb59;
+            background: linear-gradient(to bottom, #f0f9e8, #d9ecc7);
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .buttons .cancel {
+            color: #c0392b;
+        }
+
+        .buttons .login {
+            color: #2c662d;
+        }
+
+        .buttons button:hover {
+            background: #cfe8b6;
+        }
+
+    .error {
+        color: red;
+        width: 420px;
+        margin-bottom: 20px;
+        font-size: 13px;
+    }
+</style>
+
+<div class="top-bar">
+    <div class="close-btn" onclick="window.close()">×</div>
+    <span class="title">تسجيل الدخول</span>
+</div>
+
+<div class="main">
+
+    <!-- ===== Left Branding ===== -->
+    <div class="left">
+        <div class="logo">
+            <div class="icon">
+                <div class="logo-graphics">
+                    <div class="crescent gray"></div>
+                    <div class="crescent yellow"></div>
+                </div>
+                <div class="logo-text">
+                    CONS
+                    <span>CODE</span>
+                </div>
+            </div>
+            <small>Informaiton technology</small>
+        </div>
+    </div>
+
+    <!-- ===== Right Form ===== -->
+    <div class="right">
+
+        @if (!string.IsNullOrEmpty(Model?.ErrorMessage))
+        {
+            <div class="error">@Model.ErrorMessage</div>
+        }
+
+        <form asp-controller="Auth" asp-action="Login" method="post">
+
+            <div class="row">
+                <label>اسم المستخدم</label>
+                <input asp-for="Username" autofocus />
+            </div>
+
+            <div class="row">
+                <label>كلمة السر</label>
+                <input asp-for="Password" type="password" />
+            </div>
+
+            <div class="buttons">
+                <button type="submit" class="login">تسجيل</button>
+                <button type="button" class="cancel" onclick="window.close()">إلغاء</button>
+            </div>
+
+        </form>
+    </div>
+
+</div>

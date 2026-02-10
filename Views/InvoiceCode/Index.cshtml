@@ -1,0 +1,231 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>إعدادات الإيصالات</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background-color: #e6f5d0;
+            color: black;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Toolbar */
+        .topbar {
+            background: #dff2c8;
+            border-bottom: 2px solid #9bbb59;
+            padding: 5px 10px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .topbar button {
+                background: linear-gradient(to bottom, #ffffff 0%, #f3f9eb 100%);
+                border: 1px solid #9bbb59;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 13px;
+                color: black;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                border-radius: 4px;
+                transition: 0.2s;
+            }
+
+                .topbar button:hover {
+                    background: #eaf7d9;
+                    border-color: #6aa84f;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .topbar button:active {
+                    transform: translateY(1px);
+                }
+
+                .topbar button.btn-close {
+                    color: #cc0000;
+                }
+
+                .topbar button.btn-save {
+                    color: #2e7d32;
+                }
+
+        /* Table Grid */
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            margin: 10px;
+            border: 1px solid #9bbb59;
+            background: white;
+            display: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 100%);
+            border: 1px solid #ccc;
+            padding: 8px;
+            z-index: 10;
+            font-weight: bold;
+            color: black;
+            text-align: center;
+            border-bottom: 2px solid #9bbb59;
+        }
+
+        td {
+            border: 1px solid #eee;
+            padding: 4px;
+            text-align: center;
+            color: black;
+        }
+
+            td input {
+                width: 90%;
+                border: 1px solid #ddd;
+                padding: 4px;
+                text-align: center;
+                font-family: Tahoma;
+                font-size: 13px;
+                color: black;
+            }
+
+                td input:focus {
+                    border-color: #9bbb59;
+                    background-color: #f9fff0;
+                    outline: none;
+                }
+
+        tr:nth-child(even) {
+            background-color: #fcfdfa;
+        }
+
+        tr:hover {
+            background-color: #f1f8e9;
+        }
+
+        .filter-row input {
+            width: 90%;
+            margin-top: 5px;
+            font-size: 11px;
+            text-align: center;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        const PERMS = {
+            add: @(((ViewBag.CanAdd ?? false)).ToString().ToLower()),
+            edit: @(((ViewBag.CanEdit ?? false)).ToString().ToLower()),
+            print: @(((ViewBag.CanPrint ?? false)).ToString().ToLower())
+        };
+
+        function safeAction(action, fn) {
+            if (action === 'edit' && !(PERMS.edit || PERMS.add)) { alert('غير مسموح لك بالحفظ'); return; }
+            if (action === 'print' && !PERMS.print) { alert('غير مسموح لك بعرض القائمة'); return; }
+            fn();
+        }
+    </script>
+
+    <div class="topbar">
+        <button onclick="safeAction('edit', save)" class="btn-save"><span>💾</span> حفظ</button>
+        <button onclick="safeAction('print', loadList)"><span>📋</span> عرض القائمة</button>
+        <button onclick="window.close()" class="btn-close"><span>❌</span> غلق</button>
+    </div>
+
+    <div class="table-wrapper" id="tableWrapper">
+        <table id="tbl">
+            <thead>
+                <tr>
+                    <th>رقم الإيصال</th>
+                    <th>البيان</th>
+                </tr>
+                <tr class="filter-row">
+                    <th><input type="text" id="fCode" placeholder="بحث رقم الإيصال..." oninput="loadList()" /></th>
+                    <th><input type="text" id="fType" placeholder="بحث البيان..." oninput="loadList()" /></th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        function save() {
+            let rows = [];
+            document.querySelectorAll('#tbody tr').forEach(r => {
+                const code = r.querySelector('.code')?.value.trim();
+                const type = r.querySelector('.type')?.value.trim();
+                if (!code && !type) return;
+                rows.push({
+                    id: r.dataset.id,
+                    invoiceCode: code,
+                    invoiceType: type
+                });
+            });
+
+            fetch('/InvoiceCode/SaveBatch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(rows)
+            }).then(() => {
+                alert("تم الحفظ بنجاح");
+                loadList();
+            });
+        }
+
+        function loadList() {
+            fetch('/InvoiceCode/GetList')
+                .then(r => r.json())
+                .then(data => {
+                    const fCode = document.getElementById('fCode').value.trim().toLowerCase();
+                    const fType = document.getElementById('fType').value.trim().toLowerCase();
+                    const tbody = document.getElementById("tbody");
+                    tbody.innerHTML = "";
+
+                    data.filter(x =>
+                        x.invoiceCode.toLowerCase().includes(fCode) &&
+                        x.invoiceType.toLowerCase().includes(fType)
+                    ).forEach(x => {
+                        const tr = document.createElement("tr");
+                        tr.dataset.id = x.id;
+                        tr.innerHTML = `<td><input class="code" value="${x.invoiceCode}" /></td><td><input class="type" value="${x.invoiceType}" /></td>`;
+                        tbody.appendChild(tr);
+                    });
+
+                    addEmptyRow();
+                    document.getElementById("tableWrapper").style.display = "block";
+                });
+        }
+
+        function addEmptyRow() {
+            const tr = document.createElement("tr");
+            tr.dataset.id = "0";
+            tr.innerHTML = `<td><input class="code" placeholder="رقم الإيصال الجديد..." /></td><td><input class="type" placeholder="البيان الجديد..." /></td>`;
+            document.getElementById("tbody").appendChild(tr);
+        }
+    </script>
+
+</body>
+</html>

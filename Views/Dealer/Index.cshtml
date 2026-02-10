@@ -1,0 +1,352 @@
+﻿@{
+    Layout = null;
+}
+@using elbanna.Helpers
+@{
+    int SCREEN_ID = (int)Screens.Dealer;
+}
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>متعامل جديد</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background-color: #e6f5d0;
+            color: black;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Toolbar */
+        .topbar {
+            background: #dff2c8;
+            border-bottom: 2px solid #9bbb59;
+            padding: 5px 10px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .topbar button {
+                background: linear-gradient(to bottom, #ffffff 0%, #f3f9eb 100%);
+                border: 1px solid #9bbb59;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 13px;
+                color: black;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                border-radius: 4px;
+                transition: 0.2s;
+            }
+
+                .topbar button:hover {
+                    background: #eaf7d9;
+                    border-color: #6aa84f;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .topbar button:active {
+                    transform: translateY(1px);
+                }
+
+                .topbar button.btn-close {
+                    color: #cc0000;
+                }
+
+                .topbar button.btn-save {
+                    color: #2e7d32;
+                }
+
+                .topbar button.btn-new {
+                    color: #1565c0;
+                }
+
+                .topbar button:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+
+        /* Entry Section */
+        .section-container {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: #f4fbe9;
+            border: 1px dashed #9bbb59;
+            border-radius: 4px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: bold;
+            color: black;
+            min-width: 80px;
+        }
+
+        input[type="text"] {
+            border: 1px solid #9bbb59;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: Tahoma;
+            font-size: 13px;
+            color: black;
+            background-color: white;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4a6125;
+            box-shadow: 0 0 4px rgba(155, 187, 89, 0.3);
+        }
+
+        /* Table Grid */
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            margin: 10px;
+            border: 1px solid #9bbb59;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 100%);
+            border: 1px solid #ccc;
+            padding: 8px;
+            z-index: 10;
+            font-weight: bold;
+            color: black;
+            text-align: center;
+            border-bottom: 2px solid #9bbb59;
+        }
+
+        td {
+            border: 1px solid #eee;
+            padding: 6px;
+            text-align: center;
+            color: black;
+            white-space: nowrap;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fcfdfa;
+        }
+
+        tr:hover {
+            background-color: #f1f8e9;
+            cursor: pointer;
+        }
+
+        .col-search {
+            width: 90%;
+            margin-top: 5px;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .options-group {
+            display: flex;
+            gap: 20px;
+            margin-right: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <button id="btnNew" onclick="safeAction('add', newDealer)" class="btn-new"><span>📄</span> جديد</button>
+        <button id="btnSave" onclick="saveDealer()" class="btn-save"><span>💾</span> حفظ</button>
+        <button id="btnEdit" onclick="safeAction('edit', updateDealer)"><span>✏️</span> تعديل</button>
+        <button id="btnDelete" onclick="safeAction('delete', deleteDealer)" class="btn-close"><span>🗑️</span> حذف</button>
+        <button id="btnList" onclick="loadDealers()"><span>📋</span> عرض القائمة</button>
+        <button onclick="closePage()" class="btn-close"><span>❌</span> غلق</button>
+    </div>
+
+    <div class="section-container">
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>الرقم</label>
+                <input type="text" id="code" style="width: 100px;" />
+            </div>
+            <div class="field-group">
+                <label>البيان</label>
+                <input type="text" id="dealer" style="width: 350px;" />
+            </div>
+            <div class="field-group">
+                <label>الرقم القومي</label>
+                <input type="text" id="nationalId" style="width: 200px;" />
+            </div>
+        </div>
+        <div class="row-inputs">
+            <div class="options-group">
+                <label style="min-width: auto; cursor: pointer;"><input type="checkbox" id="isBank" /> حساب بنك</label>
+                <label style="min-width: auto; cursor: pointer;"><input type="checkbox" id="isStopped" /> موقوف</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-wrapper" id="tableContainer" style="display:none">
+        <table id="dealerTable">
+            <thead>
+                <tr>
+                    <th>
+                        الرقم القومي<br />
+                        <input type="text" class="col-search" onkeyup="filterTable(0,this.value)" placeholder="بحث...">
+                    </th>
+                    <th>
+                        المتعامل<br />
+                        <input type="text" class="col-search" onkeyup="filterTable(1,this.value)" placeholder="بحث...">
+                    </th>
+                    <th>
+                        الكود<br />
+                        <input type="text" class="col-search" onkeyup="filterTable(2,this.value)" placeholder="بحث...">
+                    </th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        let selectedId = 0;
+        let isLoaded = false;
+
+        const PERMS = {
+            add:    @PermissionHelper.Can((int)Screens.Dealer, "Add", Context).ToString().ToLower(),
+            edit:   @PermissionHelper.Can((int)Screens.Dealer, "Edit", Context).ToString().ToLower(),
+            delete: @PermissionHelper.Can((int)Screens.Dealer, "Delete", Context).ToString().ToLower()
+        };
+
+        function safeAction(action, fn) {
+            if (action === "add" && !PERMS.add) return alert("غير مسموح لك بالحفظ");
+            if (action === "edit" && !PERMS.edit) return alert("غير مسموح لك بالتعديل");
+            if (action === "delete" && !PERMS.delete) return alert("غير مسموح لك بالحذف");
+            fn();
+        }
+
+        function applyPermsUI() {
+            document.getElementById("btnNew").disabled = !PERMS.add;
+            document.getElementById("btnSave").disabled = !(PERMS.add || PERMS.edit);
+            document.getElementById("btnEdit").disabled = true;
+            document.getElementById("btnDelete").disabled = true;
+        }
+
+        function newDealer() {
+            selectedId = 0;
+            document.querySelectorAll(".section-container input").forEach(x => {
+                if (x.type === "checkbox") x.checked = false;
+                else x.value = "";
+            });
+            document.getElementById("btnEdit").disabled = true;
+            document.getElementById("btnDelete").disabled = true;
+        }
+
+        function saveDealer() {
+            if (selectedId === 0 && !PERMS.add) return alert("غير مسموح لك بالحفظ");
+            if (selectedId > 0 && !PERMS.edit) return alert("غير مسموح لك بالتعديل");
+            const dVal = document.getElementById("dealer").value.trim();
+            if (dVal === "") { alert("البيان مطلوب"); return; }
+
+            const url = selectedId === 0 ? "/Dealer/Save" : "/Dealer/Update";
+            fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: selectedId,
+                    dealer: dVal,
+                    code: document.getElementById("code").value,
+                    nationalId: document.getElementById("nationalId").value,
+                    isStopped: document.getElementById("isStopped").checked,
+                    isBank: document.getElementById("isBank").checked
+                })
+            }).then(r => {
+                if(r.ok) { alert("تم الحفظ بنجاح"); newDealer(); if (isLoaded) loadDealers(); }
+                else r.text().then(t => alert(t));
+            });
+        }
+
+        function updateDealer() { if (selectedId === 0) return alert("اختر متعامل"); saveDealer(); }
+
+        function deleteDealer() {
+            if (selectedId === 0) return;
+            if (!confirm("هل أنت متأكد من الحذف؟")) return;
+            fetch("/Dealer/Delete?id=" + selectedId, { method: "POST" }).then(r => {
+                if(r.ok) { newDealer(); loadDealers(); }
+                else r.text().then(t => alert(t));
+            });
+        }
+
+        function loadDealers() {
+            fetch("/Dealer/GetList").then(r => r.json()).then(data => {
+                const container = document.getElementById("tableContainer");
+                const tbody = document.querySelector("#dealerTable tbody");
+                container.style.display = "block";
+                tbody.innerHTML = "";
+                data.forEach(x => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `<td>${x.nationalId ?? ""}</td><td>${x.dealer}</td><td>${x.code ?? ""}</td>`;
+                    tr.onclick = () => selectDealer(x);
+                    tbody.appendChild(tr);
+                });
+                isLoaded = true;
+            });
+        }
+
+        function selectDealer(x) {
+            selectedId = x.id;
+            document.getElementById("dealer").value = x.dealer;
+            document.getElementById("code").value = x.code ?? "";
+            document.getElementById("nationalId").value = x.nationalId ?? "";
+            document.getElementById("isStopped").checked = x.isStopped;
+            document.getElementById("isBank").checked = x.isBank;
+            document.getElementById("btnEdit").disabled = !PERMS.edit;
+            document.getElementById("btnDelete").disabled = !PERMS.delete;
+        }
+
+        function filterTable(colIndex, value) {
+            value = (value || "").toLowerCase();
+            const rows = document.querySelectorAll("#dealerTable tbody tr");
+            rows.forEach(row => {
+                const text = (row.children[colIndex]?.textContent || "").toLowerCase();
+                row.style.display = text.includes(value) ? "" : "none";
+            });
+        }
+
+        function closePage() { window.history.back(); }
+        document.addEventListener("DOMContentLoaded", applyPermsUI);
+    </script>
+</body>
+</html>

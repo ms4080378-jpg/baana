@@ -1,0 +1,61 @@
+﻿@model List<elbanna.Models.acc_BankTransfer>
+
+<table>
+    <thead>
+        <tr>
+            <th>مراجع</th>
+            <th>ملاحظات</th>
+            <th>القيمة</th>
+            <th>البيان</th>
+            <th>الإيصال</th>
+            <th>عهده</th>
+            <th>الموقع</th>
+            <th>التاريخ</th>
+            <th>المستخدم</th>
+        </tr>
+        <tr>
+            <th><input class="col-search" data-col="0" oninput="filterTable()" placeholder="بحث"></th>
+            <th><input class="col-search" data-col="1" oninput="filterTable()" placeholder="بحث"></th>
+            <th><input class="col-search" data-col="2" oninput="filterTable()" placeholder="بحث"></th>
+            <th><input class="col-search" data-col="3" oninput="filterTable()" placeholder="بحث"></th>
+            <th><input class="col-search" data-col="4" oninput="filterTable()" placeholder="بحث"></th>
+            <th><input class="col-search" data-col="5" oninput="filterTable()" placeholder="بحث"></th>
+            <th><input class="col-search" data-col="6" oninput="filterTable()" placeholder="بحث"></th>
+            <th><input class="col-search" data-col="7" oninput="filterTable()" placeholder="بحث"></th>
+            <th><input class="col-search" data-col="8" oninput="filterTable()" placeholder="بحث"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var x in Model)
+        {
+            <tr class="data-row"
+                onclick="selectRow(this)"
+                data-reviewed="@(x.isReviewed == true ? "true" : "false")"
+                data-id="@x.id"
+                data-date="@x.processDate?.ToString("yyyy-MM-dd")"
+                data-costcenter="@x.costcenterId"
+                data-fromacc="@x.fromAcc"
+                data-toacc="@x.toAcc"
+                data-invoice="@x.invoiceCode"
+                data-notes="@x.notes"
+                data-total="@x.total"
+                data-bankid="@x.bankId">
+
+                <td>
+                    <input type="checkbox"
+                           class="review-check"
+                           disabled
+                           @(x.isReviewed == true ? "checked" : "") />
+                </td>
+                <td>@x.notes</td>
+                <td style="font-weight:bold">@x.total?.ToString("N2")</td>
+                <td>@x.toAcc</td>
+                <td>@x.invoiceCode</td>
+                <td>@x.fromAcc</td>
+                <td>@x.costcenter</td>
+                <td>@x.processDate?.ToString("yyyy-MM-dd")</td>
+                <td>@x.insertUserId</td>
+            </tr>
+        }
+    </tbody>
+</table>

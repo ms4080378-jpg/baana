@@ -1,0 +1,338 @@
+﻿@model elbanna.Models.ViewModels.StockTransferIndexVM
+@using elbanna.Helpers
+@{
+    int SCREEN_ID = (int)Screens.StockTransfer;
+    bool canAdd = PermissionHelper.Can(SCREEN_ID, "Add", Context);
+    bool canEdit = PermissionHelper.Can(SCREEN_ID, "Edit", Context);
+    bool canDelete = PermissionHelper.Can(SCREEN_ID, "Delete", Context);
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>تحويل بين المواقع</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background-color: #e6f5d0;
+            color: black;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .topbar {
+            background: #dff2c8;
+            border-bottom: 2px solid #9bbb59;
+            padding: 5px 10px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .topbar button {
+                background: linear-gradient(to bottom, #ffffff 0%, #f3f9eb 100%);
+                border: 1px solid #9bbb59;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 13px;
+                color: black;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                border-radius: 4px;
+                transition: 0.2s;
+            }
+
+                .topbar button:hover {
+                    background: #eaf7d9;
+                    border-color: #6aa84f;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .topbar button.btn-close {
+                    color: #cc0000;
+                }
+
+                .topbar button.btn-save {
+                    color: #2e7d32;
+                }
+
+                .topbar button.btn-new {
+                    color: #1565c0;
+                }
+
+        .section-container {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: #f4fbe9;
+            border: 1px dashed #9bbb59;
+            border-radius: 4px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: bold;
+            color: black;
+            min-width: 60px;
+        }
+
+        input, select {
+            border: 1px solid #9bbb59;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: Tahoma;
+            font-size: 13px;
+            color: black;
+            background-color: white;
+        }
+
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            margin: 10px;
+            border: 1px solid #9bbb59;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 100%);
+            border: 1px solid #ccc;
+            padding: 8px;
+            z-index: 10;
+            font-weight: bold;
+            color: black;
+            text-align: center;
+            border-bottom: 2px solid #9bbb59;
+        }
+
+        td {
+            border: 1px solid #eee;
+            padding: 6px;
+            text-align: center;
+            color: black;
+            white-space: nowrap;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fcfdfa;
+        }
+
+        tr:hover {
+            background-color: #f1f8e9;
+            cursor: pointer;
+        }
+
+        tr.selected {
+            background-color: #2b78e4 !important;
+            color: white !important;
+        }
+
+            tr.selected td {
+                color: white !important;
+            }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <button onclick="safeAction('add', newRow)" class="btn-new"><span>✚</span> جديد</button>
+        <button onclick="save()" class="btn-save"><span>💾</span> حفظ</button>
+        <button onclick="safeAction('edit', editSelected)"><span>✏️</span> تعديل</button>
+        <button onclick="loadList()"><span>🔍</span> عرض القائمة</button>
+        <button onclick="safeAction('delete', deleteRow)" class="btn-close"><span>🗑️</span> حذف</button>
+        <button onclick="window.location.href='/'" class="btn-close"><span>✖</span> غلق</button>
+    </div>
+
+    <input type="hidden" id="Id" value="0" />
+
+    <div class="section-container">
+        <!-- Filters -->
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>من</label>
+                <input type="date" id="FromDate" value="@Model.FromDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="field-group">
+                <label>إلى</label>
+                <input type="date" id="ToDate" value="@Model.ToDate.ToString("yyyy-MM-dd")" />
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>التاريخ</label>
+                <input type="date" id="ProcessDate" value="@DateTime.Today.ToString("yyyy-MM-dd")">
+            </div>
+            <div class="field-group">
+                <label>من موقع</label>
+                <select id="FromCostCenterId">
+                    <option value="">-- اختر --</option>
+                    @foreach (var c in Model.CostCenters)
+                    {
+                        if (PermissionHelper.CanCostCenter(c.id, Context))
+                        {
+                            <option value="@c.id">@c.costCenter</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="field-group">
+                <label>إلى موقع</label>
+                <select id="ToCostCenterId">
+                    <option value="">-- اختر --</option>
+                    @foreach (var c in Model.CostCenters)
+                    {
+                        if (PermissionHelper.CanCostCenter(c.id, Context))
+                        {
+                            <option value="@c.id">@c.costCenter</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>الصنف</label>
+                <select id="ItemId">
+                    <option value="">-- اختر --</option>
+                    @foreach (var i in Model.Items)
+                    {
+                        <option value="@i.Id">@i.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="field-group">
+                <label>الكمية</label>
+                <input type="number" id="Qty" value="0" min="0" style="width:100px" />
+            </div>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table id="tbl">
+            <thead>
+                <tr>
+                    <th>التاريخ</th>
+                    <th>من موقع</th>
+                    <th>إلى موقع</th>
+                    <th>الصنف</th>
+                    <th>الكمية</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const PERMS = {
+            add: @canAdd.ToString().ToLower(),
+            edit: @canEdit.ToString().ToLower(),
+            delete: @canDelete.ToString().ToLower()
+        };
+
+        let selectedId = 0;
+
+        function loadList() {
+            fetch(`/StockTransfer/List?from=${document.getElementById("FromDate").value}&to=${document.getElementById("ToDate").value}`)
+                .then(r => r.json())
+                .then(data => {
+                    const tbody = document.querySelector("#tbl tbody");
+                    tbody.innerHTML = "";
+                    data.forEach(x => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `<td>${x.date}</td><td>${x.fromCC}</td><td>${x.toCC}</td><td>${x.item}</td><td style="font-weight:bold">${x.qty}</td>`;
+                        tr.onclick = () => selectRow(tr, x.id);
+                        tbody.appendChild(tr);
+                    });
+                });
+        }
+
+        function selectRow(tr, id) {
+            document.querySelectorAll("#tbl tr").forEach(r => r.classList.remove("selected"));
+            tr.classList.add("selected");
+            fetch(`/StockTransfer/GetById?id=${id}`).then(r => r.json()).then(x => {
+                selectedId = x.id;
+                document.getElementById("Id").value = x.id;
+                document.getElementById("ProcessDate").value = x.processDate ? x.processDate.substring(0, 10) : "";
+                document.getElementById("FromCostCenterId").value = x.fromCostCenterId;
+                document.getElementById("ToCostCenterId").value = x.toCostCenterId;
+                document.getElementById("ItemId").value = x.itemId;
+                document.getElementById("Qty").value = x.qty;
+            });
+        }
+
+        function save() {
+            const isE = selectedId > 0;
+            if (isE && !PERMS.edit) { alert("غير مسموح بالتعديل"); return; }
+            if (!isE && !PERMS.add) { alert("غير مسموح بالحفظ"); return; }
+            if (!document.getElementById("FromCostCenterId").value || !document.getElementById("ItemId").value || document.getElementById("Qty").value <= 0) { alert("أكمل البيانات"); return; }
+            if (!confirm("تأكيد؟")) return;
+
+            fetch('@Url.Action("Save", "StockTransfer")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    Id: selectedId || 0,
+                    Date: document.getElementById("ProcessDate").value,
+                    FromCostCenterId: Number(document.getElementById("FromCostCenterId").value),
+                    ToCostCenterId: Number(document.getElementById("ToCostCenterId").value),
+                    ItemId: Number(document.getElementById("ItemId").value),
+                    Qty: Number(document.getElementById("Qty").value)
+                })
+            }).then(() => { alert("تم بنجاح"); loadList(); newRow(); }).catch(err => alert(err.message));
+        }
+
+        function deleteRow() {
+            if (!selectedId) return; if (!PERMS.delete) { alert("غير مسموح"); return; }
+            if (!confirm("حذف؟")) return;
+            fetch(`/StockTransfer/Delete?id=${selectedId}`, { method: 'POST' }).then(() => { loadList(); newRow(); });
+        }
+
+        function newRow() {
+            selectedId = 0; document.getElementById("Id").value = 0;
+            document.getElementById("FromCostCenterId").value = "";
+            document.getElementById("ToCostCenterId").value = "";
+            document.getElementById("ItemId").value = "";
+            document.getElementById("Qty").value = 0;
+            document.querySelectorAll("#tbl tr").forEach(r => r.classList.remove("selected"));
+        }
+
+        function editSelected() { if (!selectedId) { alert("اختر صف"); return; } save(); }
+        function safeAction(a, fn) { if (!PERMS[a]) { alert("غير مسموح"); return; } fn(); }
+        loadList();
+    </script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+﻿@{
+    ViewData["Title"] = "صرف مشروع";
+    Layout = null; // تم ضبطه ليكون مستقلاً لتوحيد الشكل
+}
+@using System.Text.Json
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>صرف مشروع</title>
+    <style>
+        body { font-family: Tahoma, Arial, sans-serif; direction: rtl; background-color: #e6f5d0; color: black; margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* Toolbar */
+        .topbar { background: #dff2c8; border-bottom: 2px solid #9bbb59; padding: 5px 10px; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+        .topbar button { background: linear-gradient(to bottom, #ffffff 0%, #f3f9eb 100%); border: 1px solid #9bbb59; padding: 4px 12px; cursor: pointer; font-weight: bold; font-size: 13px; color: black; display: flex; align-items: center; gap: 5px; border-radius: 4px; transition: 0.2s; }
+        .topbar button:hover { background: #eaf7d9; border-color: #6aa84f; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .topbar button:active { transform: translateY(1px); }
+        .topbar button.btn-close { color: #cc0000; }
+        .topbar button.btn-save { color: #2e7d32; }
+        .topbar button.btn-new { color: #1565c0; }
+
+        /* Entry & Filter Section */
+        .section-container { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .row-inputs { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; padding: 10px; background: #f4fbe9; border: 1px dashed #9bbb59; border-radius: 4px; }
+        .field-group { display: flex; align-items: center; gap: 8px; position: relative; }
+        label { font-weight: bold; color: black; min-width: 60px; }
+        input, select, textarea { border: 1px solid #9bbb59; padding: 4px 8px; border-radius: 4px; font-family: Tahoma; font-size: 13px; color: black; background-color: white; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #4a6125; box-shadow: 0 0 4px rgba(155, 187, 89, 0.3); }
+
+        /* Table Grid */
+        .table-wrapper { flex: 1; overflow: auto; margin: 10px; border: 1px solid #9bbb59; background: white; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th { position: sticky; top: 0; background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 100%); border: 1px solid #ccc; padding: 8px; z-index: 10; font-weight: bold; color: black; text-align: center; border-bottom: 2px solid #9bbb59; }
+        td { border: 1px solid #eee; padding: 6px; text-align: center; color: black; white-space: nowrap; cursor: pointer; }
+        tr:nth-child(even) { background-color: #fcfdfa; }
+        tr:hover { background-color: #f1f8e9; }
+        tr.active-row { background-color: #2b78e4 !important; color: white !important; }
+        tr.active-row td { color: white !important; }
+
+        /* Dropdown Item List */
+        #itemList { position: absolute; top: 100%; right: 0; width: 100%; min-width: 250px; max-height: 250px; overflow-y: auto; background: white; border: 1px solid #9bbb59; z-index: 9999; display: none; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        #itemList div { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; color: black; }
+        #itemList div:hover { background-color: #f0f7e6; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <script>
+        const PERMS = @Html.Raw(JsonSerializer.Serialize(new {
+            add    = ViewBag.CanAdd    ?? true,
+            edit   = ViewBag.CanEdit   ?? true,
+            delete = ViewBag.CanDelete ?? true,
+            list   = ViewBag.CanList   ?? true,
+            allowedCostCenters = ViewBag.AllowedCostCenters ?? new int[] { }
+        }));
+
+        function safeAction(action, fn) {
+            if (action === "add" && !PERMS.add) return alert("غير مسموح لك بالإضافة");
+            if (action === "edit" && !PERMS.edit) return alert("غير مسموح لك بالتعديل");
+            if (action === "delete" && !PERMS.delete) return alert("غير مسموح لك بالحذف");
+            if (action === "list" && !PERMS.list) return alert("غير مسموح لك بعرض القائمة");
+            fn();
+        }
+    </script>
+
+    <div class="topbar">
+        <button onclick="safeAction('add', newRow)" class="btn-new"><span>+</span> جديد</button>
+        <button onclick="safeAction(selectedId ? 'edit' : 'add', save)" class="btn-save"><span>💾</span> حفظ</button>
+        <button onclick="safeAction('edit', edit)"><span>✏️</span> تعديل</button>
+        <button onclick="safeAction('delete', deleteRow)" class="btn-close"><span>🗑️</span> حذف</button>
+        <button onclick="safeAction('list', showList)"><span>🔍</span> عرض القائمة</button>
+        <button onclick="window.location.href='/'" class="btn-close"><span>❌</span> غلق</button>
+    </div>
+
+    <div class="section-container">
+        <!-- Filters -->
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>الموقع</label>
+                <select id="costCenter" style="width: 250px;">
+                    <option value="">-- اختر الموقع --</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label>من</label>
+                <input type="date" id="dateFrom" />
+            </div>
+            <div class="field-group">
+                <label>إلى</label>
+                <input type="date" id="dateTo" />
+            </div>
+        </div>
+
+        <!-- Entry Form -->
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>التاريخ</label>
+                <input type="date" id="processDate" />
+            </div>
+            <div class="field-group">
+                <label>الصنف</label>
+                <input type="text" id="itemSearch" placeholder="بحث عن صنف..." autocomplete="off" style="width: 250px;" />
+                <input type="hidden" id="item" />
+                <div id="itemList"></div>
+            </div>
+            <div class="field-group">
+                <label>الكمية</label>
+                <input type="number" id="qty" value="0" style="width: 100px;" />
+            </div>
+        </div>
+        <div class="row-inputs">
+            <div class="field-group" style="width: 100%;">
+                <label>ملاحظات</label>
+                <textarea id="notes" style="width: 100%; height: 50px;"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table id="tblList">
+            <thead>
+                <tr>
+                    <th>المستخدم</th>
+                    <th>الموقع</th>
+                    <th>الصنف</th>
+                    <th>التاريخ</th>
+                    <th>الكمية</th>
+                    <th>ملاحظات</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        let allItems = [], selectedId = 0, selectedRowData = null;
+
+        function edit() {
+            if (!selectedId || !selectedRowData) return alert("اختر صف أولاً");
+            document.getElementById("costCenter").value = selectedRowData.costCenterId || "";
+            document.getElementById("item").value = selectedId;
+            document.getElementById("itemSearch").value = selectedRowData.item || "";
+            document.getElementById("processDate").value = selectedRowData.processDate.substring(0, 10);
+            document.getElementById("qty").value = selectedRowData.qty || 0;
+            document.getElementById("notes").value = selectedRowData.notes || "";
+        }
+
+        function newRow() {
+            document.getElementById("qty").value = 0; document.getElementById("notes").value = "";
+            document.getElementById("item").value = ""; document.getElementById("itemSearch").value = "";
+            selectedId = 0; selectedRowData = null;
+            document.querySelectorAll("#tblList tbody tr").forEach(r => r.classList.remove("active-row"));
+        }
+
+        function save() {
+            const model = {
+                id: selectedId,
+                processDate: document.getElementById("processDate").value,
+                costCenterId: document.getElementById("costCenter").value,
+                itemId: document.getElementById("item").value,
+                qty: document.getElementById("qty").value,
+                notes: document.getElementById("notes").value
+            };
+            fetch("/OutTrns/Save", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(model) })
+            .then(r => r.text()).then(msg => { alert(msg); showList(); newRow(); }).catch(err => alert(err));
+        }
+
+        function showList() {
+            const cc = document.getElementById("costCenter").value, f = document.getElementById("dateFrom").value, t = document.getElementById("dateTo").value;
+            if (!f || !t || !cc) return alert("أكمل بيانات البحث (من/إلى/الموقع)");
+            fetch(`/OutTrns/List?from=${f}&to=${t}&costCenterId=${cc === "ALL" ? "" : cc}`)
+            .then(r => r.json()).then(data => {
+                const tbody = document.querySelector("#tblList tbody"); tbody.innerHTML = "";
+                if (data.length === 0) { tbody.innerHTML = `<tr><td colspan="6">لا توجد بيانات</td></tr>`; return; }
+                data.forEach(x => {
+                    const tr = document.createElement("tr");
+                    tr.dataset.id = x.id; tr.dataset.costcenterid = x.costCenterId; tr.dataset.itemid = x.itemId;
+                    tr.innerHTML = `<td>${x.userName ?? ''}</td><td>${x.costCenter}</td><td>${x.item}</td><td>${x.processDate ? x.processDate.substring(0,10) : ""}</td><td style="font-weight:bold">${x.qty}</td><td>${x.notes}</td>`;
+                    tr.onclick = () => {
+                        document.querySelectorAll("#tblList tbody tr").forEach(r => r.classList.remove("active-row"));
+                        tr.classList.add("active-row"); selectedId = x.id;
+                        selectedRowData = { costCenterId: x.costCenterId, itemId: x.itemId, item: x.item, processDate: x.processDate, qty: x.qty, notes: x.notes };
+                    };
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        function deleteRow() {
+            if (!selectedId) return alert("اختر صف أولاً");
+            if (!confirm("تأكيد الحذف؟")) return;
+            fetch(`/OutTrns/Delete?id=${selectedId}`, { method: "POST" }).then(r => r.text()).then(msg => { alert(msg); showList(); newRow(); });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const today = new Date().toISOString().split("T")[0];
+            document.getElementById("processDate").value = today;
+            document.getElementById("dateFrom").value = today;
+            document.getElementById("dateTo").value = today;
+
+            fetch('/OutTrns/GetCostCenters').then(r => r.json()).then(data => {
+                const ddl = document.getElementById("costCenter"); ddl.innerHTML = `<option value="">-- اختر الموقع --</option>`;
+                if (PERMS.allowedCostCenters.length > 1) ddl.innerHTML += `<option value="ALL">كل المواقع</option>`;
+                data.filter(x => PERMS.allowedCostCenters.includes(x.id)).forEach(x => ddl.innerHTML += `<option value="${x.id}">${x.name}</option>`);
+            });
+
+            fetch('/OutTrns/GetItems').then(r => r.json()).then(data => { allItems = data; });
+
+            const search = document.getElementById("itemSearch"), list = document.getElementById("itemList"), hidden = document.getElementById("item");
+            search.addEventListener("input", function () {
+                const val = this.value.trim().toLowerCase(); list.innerHTML = "";
+                if (!val) { list.style.display = "none"; hidden.value = ""; return; }
+                const filtered = allItems.filter(x => (x.name || "").toLowerCase().includes(val));
+                if (filtered.length > 0) {
+                    filtered.forEach(it => {
+                        const div = document.createElement("div"); div.textContent = it.name;
+                        div.onclick = () => { search.value = it.name; hidden.value = it.id; list.style.display = "none"; };
+                        list.appendChild(div);
+                    });
+                    list.style.display = "block";
+                } else list.style.display = "none";
+            });
+            document.addEventListener("click", e => { if (!search.contains(e.target)) list.style.display = "none"; });
+        });
+    </script>
+</body>
+</html>

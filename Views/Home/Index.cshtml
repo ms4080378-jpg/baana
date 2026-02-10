@@ -1,0 +1,254 @@
+﻿@{
+    Layout = null;
+
+    var balanceUrl = Url.Action("BalanceSheet", "Reports");
+    var stockTransferUrl = Url.Action("Index", "StockTransfer", new { area = "Stores" });
+}
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>الرئيسية</title>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Tahoma;
+            direction: rtl;
+            background: linear-gradient(135deg, #e6f5d0, #f3ffe6);
+        }
+
+        .top-bar {
+            height: 40px;
+            background: linear-gradient(to left, #b6d7a8, #d8f1c1);
+            border-bottom: 1px solid #9bbb59;
+        }
+
+        .container {
+            padding: 14px;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+        }
+
+        .card {
+            background: linear-gradient(180deg, #ffffff, #e9f7d9);
+            border: 1px solid #b6d7a8;
+            height: 110px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        }
+
+            .card:hover {
+                transform: translateY(-4px);
+                background: linear-gradient(180deg, #f1ffe3, #dff2c8);
+                box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            }
+
+            .card i {
+                font-size: 26px;
+                margin-bottom: 8px;
+                color: #38761d;
+            }
+
+            .card span {
+                font-size: 14px;
+                font-weight: bold;
+                color: #000;
+                text-align: center;
+                line-height: 1.4;
+            }
+
+        .exit {
+            background: linear-gradient(#ff6b6b, #ff4d4d);
+            border-color: #c0392b;
+        }
+
+            .exit i,
+            .exit span {
+                color: #fff;
+            }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar"></div>
+
+    <div class="container">
+
+        <div class="card" onclick="location.href='/Daily/Index'">
+            <i class="fa-solid fa-book"></i>
+            <span>اليومية</span>
+        </div>
+
+        <div class="card" onclick="location.href='/Purchase/Index'">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span>المشتريات</span>
+        </div>
+
+        <div class="card" onclick="location.href='/CashIn/Index'">
+            <i class="fa-solid fa-money-bill-wave"></i>
+            <span>وارد نقدية</span>
+        </div>
+
+        <div class="card" onclick="openCustodyStage()">
+            <i class="fa-solid fa-briefcase"></i>
+            <span>عهد مرحلة</span>
+        </div>
+
+        <div class="card">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+            <span>كشف حساب</span>
+        </div>
+
+        <div class="card">
+            <i class="fa-solid fa-vault"></i>
+            <span>كشف حساب عهدة</span>
+        </div>
+
+        <div class="card" onclick="location.href='@balanceUrl'">
+            <i class="fa-solid fa-scale-balanced"></i>
+            <span>أرصدة</span>
+        </div>
+
+        <div class="card" onclick="location.href='/BankTransfer/Index'">
+            <i class="fa-solid fa-right-left"></i>
+            <span>تسجيل تحويلات</span>
+        </div>
+
+        <div class="card" onclick="location.href='/Cheque/Index'">
+            <i class="fa-solid fa-money-check"></i>
+            <span>شيكات</span>
+        </div>
+
+        <div class="card" onclick="openChequeRec()">
+            <i class="fa-solid fa-pen-to-square"></i>
+            <span>تسجيل شيكات</span>
+        </div>
+
+        <div class="card" onclick="location.href='/PayInvoice/Index'">
+            <i class="fa-solid fa-file-contract"></i>
+            <span>متحصلات المستخلصات</span>
+        </div>
+
+        <div class="card" onclick="location.href='/Invoice/Index'">
+            <i class="fa-solid fa-file-invoice"></i>
+            <span>المستخلصات</span>
+        </div>
+
+        <div class="card">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>كشف مستخلص</span>
+        </div>
+
+        <div class="card" onclick="location.href='/InTrns/Index'">
+            <i class="fa-solid fa-warehouse"></i>
+            <span>وارد مخزن</span>
+        </div>
+
+        <div class="card">
+            <i class="fa-solid fa-boxes-stacked"></i>
+            <span>جرد مخزن</span>
+        </div>
+
+        <div class="card">
+            <i class="fa-solid fa-list"></i>
+            <span>حركة صنف تفصيلي</span>
+        </div>
+
+        <div class="card" onclick="location.href='/OutTrns/Index'">
+            <i class="fa-solid fa-industry"></i>
+            <span>صرف من مشروع</span>
+        </div>
+
+        <div class="card" onclick="location.href='@stockTransferUrl'">
+            <i class="fa-solid fa-shuffle"></i>
+            <span>تحويل بين المشروعات</span>
+        </div>
+
+        <div class="card">
+            <i class="fa-solid fa-coins"></i>
+            <span>كشف خزينة مشروع</span>
+        </div>
+
+        <div class="card" onclick="location.href='/Dealer/Index'">
+            <i class="fa-solid fa-user-plus"></i>
+            <span>متعامل جديد</span>
+        </div>
+
+        <div class="card" onclick="location.href='/Item/Index'">
+            <i class="fa-solid fa-box"></i>
+            <span>صنف جديد</span>
+        </div>
+
+        <div class="card">
+            <i class="fa-solid fa-chart-column"></i>
+            <span>تقارير مشتريات</span>
+        </div>
+
+        <div class="card" onclick="openItemPurchase()">
+            <i class="fa-solid fa-helmet-safety"></i>
+            <span>مشتريات المقاولين</span>
+        </div>
+
+        <div class="card" onclick="location.href='/Users/Index'">
+            <i class="fa-solid fa-users"></i>
+            <span>المستخدمين</span>
+        </div>
+
+        <div class="card">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>سجل المستخدمين</span>
+        </div>
+
+        <div class="card" onclick="openProjectStatus()">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>الموقف التنفيذي للمشروع</span>
+        </div>
+
+        <div class="card exit" onclick="goToLogin()">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>تسجيل الخروج</span>
+        </div>
+
+
+    </div>
+
+    <script>
+        function openChequeRec() {
+            location.href = '/ChequeRec/Index';
+        }
+
+        function openCustodyStage() {
+            location.href = '/CustodyStage/Index';
+        }
+
+        function openItemPurchase() {
+            location.href = '/ItemPurchase/Index';
+        }
+
+        function openProjectStatus() {
+            location.href = '/ProjectStatus/Index';
+        }
+
+             function goToLogin() {
+            fetch('/Auth/Logout', {
+                method: 'POST'
+            }).finally(() => {
+                // مسح الهيستوري ومنع الرجوع
+                window.location.replace('/Auth/Login');
+            });
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,129 @@
+﻿@model elbanna.Models.ViewModels.UserPermissionsVM
+@{
+    Layout = null;
+}
+
+<style>
+    body {
+        font-family: Tahoma;
+        background: #e6f5d0;
+        direction: rtl;
+        font-size: 13px;
+        margin: 0
+    }
+
+    .topbar {
+        background: #dff2c8;
+        border-bottom: 1px solid #9bbb59;
+        padding: 6px;
+        display: flex;
+        gap: 6px;
+        position: sticky;
+        top: 0;
+        z-index: 999
+    }
+
+        .topbar button {
+            border: 1px solid #9bbb59;
+            background: #fff;
+            padding: 4px 14px;
+            font-weight: bold;
+            cursor: pointer
+        }
+
+    .bulk-actions {
+        margin: 10px
+    }
+
+        .bulk-actions button {
+            border: 1px solid #9bbb59;
+            background: #fff;
+            padding: 3px 10px;
+            margin-left: 6px;
+            cursor: pointer
+        }
+
+    .perm-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff
+    }
+
+        .perm-table th, .perm-table td {
+            border: 1px solid #9bbb59;
+            padding: 6px;
+            text-align: center
+        }
+
+        .perm-table th {
+            background: #cfe8b6
+        }
+
+    .msg {
+        margin: 10px;
+        border: 1px solid #9bbb59;
+        background: #f3fbe8;
+        padding: 8px;
+        font-weight: bold
+    }
+</style>
+
+<form method="post"
+      action="@Url.Action("SavePermissions","Users", new { mode="sites" })"
+      onsubmit="return confirm('تأكيد الحفظ؟');">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="UserId" />
+
+    <div class="topbar">
+        <button type="submit">حفظ</button>
+        <button type="button" onclick="goScreens()">صلاحيات الشاشات</button>
+        <button type="button" onclick="return confirmClose('@Url.Action("Form", "Users", new { id = Model.UserId })');">غلق</button>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="msg">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="msg">@TempData["Error"]</div>
+    }
+
+    <div class="bulk-actions">
+        <button type="button" onclick="checkAll(true)">تحديد الكل</button>
+        <button type="button" onclick="checkAll(false)">إلغاء التحديد</button>
+    </div>
+
+    <table class="perm-table">
+        <thead>
+            <tr>
+                <th>الموقع</th>
+                <th>إضافة</th>
+                <th>تعديل</th>
+                <th>حذف</th>
+                <th>طباعة</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.CostCenters.Count; i++)
+            {
+                <tr>
+                    <td>@Model.CostCenters[i].Name</td>
+                    <td><input asp-for="CostCenters[i].CanAdd" type="checkbox" /></td>
+                    <td><input asp-for="CostCenters[i].CanEdit" type="checkbox" /></td>
+                    <td><input asp-for="CostCenters[i].CanDelete" type="checkbox" /></td>
+                    <td><input asp-for="CostCenters[i].CanPrint" type="checkbox" /></td>
+
+                    <input type="hidden" asp-for="CostCenters[i].RefId" />
+                    <input type="hidden" asp-for="CostCenters[i].Name" />
+                </tr>
+            }
+        </tbody>
+    </table>
+</form>
+
+<script>
+    function checkAll(val){document.querySelectorAll("tbody input[type=checkbox]").forEach(x=>x.checked=val);}
+    function confirmClose(url){ if(confirm("تأكيد إلغاء اي تعديل؟")) location.href=url; return false; }
+    function goScreens(){ if(confirm("تأكيد إلغاء اي تعديل؟")) location.href='@Url.Action("ScreenPermissions", "Users", new { id = Model.UserId })'; }
+</script>

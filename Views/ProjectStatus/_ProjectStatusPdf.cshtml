@@ -1,0 +1,27 @@
+﻿@model elbanna.Models.ViewModels.ProjectStatusPageVM
+<div style="padding:15px; background: #fff; border-bottom: 2px solid #9bbb59; display: flex; justify-content: space-between; align-items: center;">
+    <h3 style="margin:0; color: black;">معاينة الموقف التنفيذي (جاهز للطباعة)</h3>
+    <button class="topbar button" onclick="backToTable()" style="background: #f0f0f0; border: 1px solid #999;">⬅️ رجوع للجدول العادي</button>
+</div>
+
+<div style="padding:20px; background: white;">
+    <table class="status-grid" style="border: 2px solid black;">
+        @await Html.PartialAsync("_ProjectStatusHeader", Model)
+        <tbody>
+            @foreach (var row in Model.Rows)
+            {
+                <tr>
+                    <td style="border: 1px solid black;">@row.BuildingNo</td>
+                    <td style="border: 1px solid black;">@row.Item</td>
+                    <td style="border: 1px solid black;">@row.Dealer</td>
+                    @foreach (var f in Model.Floors)
+                    {
+                        <td style="border: 1px solid black;">@(row.Floors.ContainsKey(f) ? row.Floors[f] : 0)</td>
+                    }
+                    <td style="border: 1px solid black; font-weight:bold;">@row.Total</td>
+                    <td style="border: 1px solid black; font-weight:bold;">@row.Required</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

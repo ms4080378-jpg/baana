@@ -1,0 +1,221 @@
+﻿@model elbanna.ViewModels.InTrnsPageVM
+@using System.Text.Json
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <title>وارد مخزن</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        body { font-family: Tahoma, Arial, sans-serif; direction: rtl; background-color: #e6f5d0; color: black; margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* Toolbar */
+        .topbar { background: #dff2c8; border-bottom: 2px solid #9bbb59; padding: 5px 10px; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+        .topbar button { background: linear-gradient(to bottom, #ffffff 0%, #f3f9eb 100%); border: 1px solid #9bbb59; padding: 4px 12px; cursor: pointer; font-weight: bold; font-size: 13px; color: black; display: flex; align-items: center; gap: 5px; border-radius: 4px; transition: 0.2s; }
+        .topbar button:hover { background: #eaf7d9; border-color: #6aa84f; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .topbar button:active { transform: translateY(1px); }
+        .topbar button.btn-close { color: #cc0000; }
+        .topbar button.btn-save { color: #2e7d32; }
+        .topbar button.btn-new { color: #1565c0; }
+
+        /* Entry & Filter Section */
+        .section-container { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .row-inputs { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; padding: 10px; background: #f4fbe9; border: 1px dashed #9bbb59; border-radius: 4px; }
+        .field-group { display: flex; align-items: center; gap: 8px; }
+        label { font-weight: bold; color: black; min-width: 60px; }
+        input, select { border: 1px solid #9bbb59; padding: 4px 8px; border-radius: 4px; font-family: Tahoma; font-size: 13px; color: black; background-color: white; }
+        input:focus, select:focus { outline: none; border-color: #4a6125; box-shadow: 0 0 4px rgba(155, 187, 89, 0.3); }
+        input[readonly] { background-color: #f9f9f9; font-weight: bold; }
+
+        /* Table Grid */
+        .table-wrapper { flex: 1; overflow: auto; margin: 10px; border: 1px solid #9bbb59; background: white; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th { position: sticky; top: 0; background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 100%); border: 1px solid #ccc; padding: 8px; z-index: 10; font-weight: bold; color: black; text-align: center; border-bottom: 2px solid #9bbb59; }
+        td { border: 1px solid #eee; padding: 6px; text-align: center; color: black; white-space: nowrap; }
+        tr:nth-child(even) { background-color: #fcfdfa; }
+        tr:hover { background-color: #f1f8e9; cursor: pointer; }
+        tr.active { background-color: #2b78e4 !important; color: white !important; }
+        tr.active td { color: white !important; }
+    </style>
+</head>
+<body>
+
+    <script>
+        const PERMS = @Html.Raw(JsonSerializer.Serialize(new {
+            add    = ViewBag.CanAdd    ?? true,
+            edit   = ViewBag.CanEdit   ?? true,
+            delete = ViewBag.CanDelete ?? true,
+            list   = ViewBag.CanList   ?? true
+        }));
+
+        function safeAction(action, fn) {
+            if (action === "add" && !PERMS.add) return alert("غير مسموح لك بالإضافة");
+            if (action === "edit" && !PERMS.edit) return alert("غير مسموح لك بالتعديل");
+            if (action === "delete" && !PERMS.delete) return alert("غير مسموح لك بالحذف");
+            if (action === "list" && !PERMS.list) return alert("غير مسموح لك بعرض القائمة");
+            fn();
+        }
+    </script>
+
+    <div class="topbar">
+        <button onclick="safeAction('add', resetForm)" class="btn-new"><span>📄</span> جديد</button>
+        <button onclick="safeAction('add', function(){ save(false); })" class="btn-save"><span>💾</span> حفظ</button>
+        <button onclick="safeAction('edit', function(){ save(true); })"><span>✏️</span> تعديل</button>
+        <button onclick="safeAction('delete', deleteRow)" class="btn-close"><span>🗑️</span> حذف</button>
+        <button onclick="safeAction('list', loadList)"><span>📋</span> عرض القائمة</button>
+        <button onclick="closePage()" class="btn-close"><span>❌</span> غلق</button>
+    </div>
+
+    <div class="section-container">
+        <!-- Filters -->
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>من</label>
+                <input type="date" id="DateFrom">
+            </div>
+            <div class="field-group">
+                <label>إلى</label>
+                <input type="date" id="DateTo">
+            </div>
+            <div class="field-group">
+                <label>الموقع</label>
+                <select id="CostCenterId">
+                    <option value="0">-- الكل --</option>
+                    @foreach (var c in Model.Filter.CostCenters) { <option value="@c.Value">@c.Text</option> }
+                </select>
+            </div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #9bbb59; margin: 0;" />
+
+        <!-- Entry Form -->
+        <div class="row-inputs">
+            <input type="hidden" id="Id" />
+            <div class="field-group">
+                <label>التاريخ</label>
+                <input type="date" id="ProcessDate">
+            </div>
+            <div class="field-group">
+                <label>الصنف</label>
+                <select id="Item" style="width: 250px;">
+                    <option value="">-- اختر الصنف --</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label>الكمية</label>
+                <input type="number" id="Qty" style="width: 80px;">
+            </div>
+            <div class="field-group">
+                <label>سعر</label>
+                <input type="number" id="UnitPrice" style="width: 80px;">
+            </div>
+            <div class="field-group">
+                <label>الإجمالي</label>
+                <input type="number" id="Total" readonly style="width: 100px;">
+            </div>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>الصنف</th>
+                    <th>التاريخ</th>
+                    <th>الموقع</th>
+                    <th>الكمية</th>
+                    <th>السعر</th>
+                    <th>الإجمالي</th>
+                </tr>
+            </thead>
+            <tbody id="grid"></tbody>
+        </table>
+    </div>
+
+    <script>
+        function today() { return new Date().toISOString().substring(0, 10); }
+
+        $(document).ready(function () {
+            $('input[type="date"]').val(today());
+            loadItems();
+        });
+
+        function loadItems() {
+            $.get('/InTrns/GetItems', function (data) {
+                let html = '<option value="">-- اختر الصنف --</option>';
+                data.forEach(x => { html += `<option value="${x}">${x}</option>`; });
+                $('#Item').html(html);
+            });
+        }
+
+        function loadList() {
+            if (!$('#DateFrom').val() || !$('#DateTo').val()) { alert('من فضلك اختر التاريخ'); return; }
+            $.get('/InTrns/GetList', {
+                from: $('#DateFrom').val(),
+                to: $('#DateTo').val(),
+                costCenterId: $('#CostCenterId').val()
+            }, function (data) {
+                let html = '';
+                if (!data || data.length === 0) { $('#grid').html(''); alert('لا توجد بيانات'); return; }
+                data.forEach(x => {
+                    html += `<tr data-id="${x.id}"><td>${x.item}</td><td>${x.processDate ? x.processDate.substring(0,10) : ''}</td><td>${x.costCenter}</td><td>${x.qty}</td><td>${x.unitPrice}</td><td style="font-weight:bold">${x.total}</td></tr>`;
+                });
+                $('#grid').html(html);
+            });
+        }
+
+        $(document).on('click', '#grid tr', function () {
+            $('#grid tr').removeClass('active');
+            $(this).addClass('active');
+            const tds = $(this).children('td');
+            $('#Id').val($(this).data('id'));
+            $('#Item').val(tds.eq(0).text());
+            $('#ProcessDate').val(tds.eq(1).text());
+            $('#CostCenterId option').filter(function () { return $(this).text() === tds.eq(2).text(); }).prop('selected', true);
+            $('#Qty').val(tds.eq(3).text());
+            $('#UnitPrice').val(tds.eq(4).text());
+            $('#Total').val(tds.eq(5).text());
+        });
+
+        function save(isEdit) {
+            const id = $('#Id').val();
+            const costId = $('#CostCenterId').val();
+            if (costId === '0' || !$('#Item').val() || $('#Qty').val() <= 0) { alert('بيانات غير مكتملة'); return; }
+            if (isEdit && !id) { alert('اختر صف أولاً'); return; }
+            if (!isEdit && id) { alert('اضغط جديد أولاً'); return; }
+
+            $.post('/InTrns/Save', {
+                Id: isEdit ? id : 0,
+                ProcessDate: $('#ProcessDate').val(),
+                CostCenterId: costId,
+                CostCenter: $('#CostCenterId option:selected').text(),
+                Item: $('#Item').val(),
+                Qty: $('#Qty').val(),
+                UnitPrice: $('#UnitPrice').val()
+            }).done(function () { alert('تم بنجاح'); loadList(); resetForm(); }).fail(x => alert(x.responseText));
+        }
+
+        function deleteRow() {
+            const id = $('#Id').val();
+            if (!id) { alert('اختر سجل أولاً'); return; }
+            if (!confirm('تأكيد الحذف؟')) return;
+            $.post('/InTrns/Delete', { id }).done(function () { alert('تم الحذف'); loadList(); resetForm(); }).fail(x => alert(x.responseText));
+        }
+
+        function resetForm() {
+            $('#grid tr').removeClass('active');
+            $('#Id').val(''); $('#Item').val(''); $('#Qty').val(''); $('#UnitPrice').val(''); $('#Total').val(0);
+        }
+
+        $('#Qty,#UnitPrice').on('input', function () {
+            $('#Total').val((parseFloat($('#Qty').val()) || 0) * (parseFloat($('#UnitPrice').val()) || 0));
+        });
+
+        function closePage() { window.location.href = '/Home/Index'; }
+    </script>
+</body>
+</html>

@@ -1,0 +1,437 @@
+@using elbanna.Helpers
+@{
+    int SCREEN_ID = (int)Screens.BankTransfer;
+    bool canReview = PermissionViewHelper.CanReview(Context) && PermissionHelper.Can(SCREEN_ID, "Edit", Context);
+    Layout = null;
+}
+@model elbanna.ViewModels.BankTransferVM
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>تسجيل تحويلات</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background-color: #e6f5d0;
+            color: black;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .topbar {
+            background: #dff2c8;
+            border-bottom: 2px solid #9bbb59;
+            padding: 5px 10px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .topbar button {
+                background: linear-gradient(to bottom, #ffffff 0%, #f3f9eb 100%);
+                border: 1px solid #9bbb59;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 13px;
+                color: black;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                border-radius: 4px;
+                transition: 0.2s;
+            }
+
+                .topbar button:hover {
+                    background: #eaf7d9;
+                    border-color: #6aa84f;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .topbar button.btn-close {
+                    color: #cc0000;
+                }
+
+                .topbar button.btn-save {
+                    color: #2e7d32;
+                }
+
+                .topbar button.btn-new {
+                    color: #1565c0;
+                }
+
+        .section-container {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: #f4fbe9;
+            border: 1px dashed #9bbb59;
+            border-radius: 4px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: bold;
+            color: black;
+            min-width: 60px;
+        }
+
+        input, select {
+            border: 1px solid #9bbb59;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: Tahoma;
+            font-size: 13px;
+            color: black;
+            background-color: white;
+        }
+
+        .table-container {
+            flex: 1;
+            overflow: auto;
+            margin: 10px;
+            border: 1px solid #9bbb59;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 100%);
+            border: 1px solid #ccc;
+            padding: 8px;
+            z-index: 10;
+            font-weight: bold;
+            color: black;
+            text-align: center;
+            border-bottom: 2px solid #9bbb59;
+        }
+
+        td {
+            border: 1px solid #eee;
+            padding: 6px;
+            text-align: center;
+            color: black;
+            white-space: nowrap;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fcfdfa;
+        }
+
+        tr:hover {
+            background-color: #f1f8e9;
+            cursor: pointer;
+        }
+
+        tr.selected {
+            background-color: #2b78e4 !important;
+            color: white !important;
+        }
+
+            tr.selected td {
+                color: white !important;
+            }
+
+        .col-search {
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 11px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <button onclick="safeAction('add', newRow)" class="btn-new"><span>📄</span> جديد</button>
+        <button onclick="save()" class="btn-save"><span>💾</span> حفظ</button>
+        <button type="button" id="btnEdit" onclick="safeAction('edit', updateRow)" disabled><span>✏️</span> تعديل</button>
+        <button onclick="safeAction('delete', deleteRow)" class="btn-close"><span>🗑️</span> حذف</button>
+        <button type="button" onclick="reviewClicked()"><span>🔎</span> مراجعة</button>
+        <button onclick="loadBankTransferList()"><span>📋</span> عرض القائمة</button>
+        <button onclick="location.href='/'" class="btn-close"><span>❌</span> غلق</button>
+    </div>
+
+    <div class="section-container">
+        <!-- Filters -->
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>من</label>
+                <input type="date" id="fromDate" value="@Model.DateFrom.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="field-group">
+                <label>إلى</label>
+                <input type="date" id="toDate" value="@Model.DateTo.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="field-group">
+                <label>الموقع</label>
+                <select id="filterCostCenter">
+                    <option value="">-- اختر --</option>
+                    @foreach (var c in Model.CostCenters)
+                    {
+                        <option value="@c.id">@c.costCenter</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="row-inputs">
+            <input type="hidden" id="id" />
+            <div class="field-group">
+                <label>التاريخ</label>
+                <input type="date" id="processDate" />
+            </div>
+            <div class="field-group">
+                <label>البيان</label>
+                <select id="dealerId">
+                    <option value="">-- اختر --</option>
+                    @foreach (var d in Model.Dealers)
+                    {
+                        <option value="@d.id">@d.dealer</option>
+                    }
+                </select>
+            </div>
+            <div class="field-group">
+                <label>البنك</label>
+                <select id="bankId">
+                    <option value="">-- اختر --</option>
+                    @foreach (var b in Model.Banks)
+                    {
+                        <option value="@b.id">@b.dealer</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>رقم الشيك</label>
+                <input type="text" id="chequeNo" />
+            </div>
+            <div class="field-group">
+                <label>الإيصال</label>
+                <input type="text" id="invoiceCode" />
+            </div>
+            <div class="field-group">
+                <label>القيمة</label>
+                <input type="number" id="total" value="0" style="width:100px" />
+            </div>
+        </div>
+
+        <div class="row-inputs">
+            <div class="field-group">
+                <input list="fromAccList" id="fromAcc" placeholder="من عهدة" />
+                <datalist id="fromAccList">
+                    @foreach (var a in Model.CreditAccounts)
+                    {
+                        <option value="@a.creditAcc"></option>
+                    }
+                </datalist>
+            </div>
+            <div class="field-group">
+                <input list="toAccList" id="toAcc" placeholder="إلى عهدة" />
+                <datalist id="toAccList">
+                    @foreach (var a in Model.CreditAccounts)
+                    {
+                        <option value="@a.creditAcc"></option>
+                    }
+                </datalist>
+            </div>
+            <div class="field-group">
+                <label>ملاحظات</label>
+                <input type="text" id="notes" style="width:350px" />
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container" id="tableContainer"></div>
+
+    <script>
+        const PERMS = {
+            add: @PermissionHelper.Can((int)Screens.BankTransfer, "Add", Context).ToString().ToLower(),
+            edit: @PermissionHelper.Can((int)Screens.BankTransfer, "Edit", Context).ToString().ToLower(),
+            delete: @PermissionHelper.Can((int)Screens.BankTransfer, "Delete", Context).ToString().ToLower(),
+            review: @((canReview) ? "true" : "false")
+        };
+
+        let selectedId = 0;
+
+        function loadBankTransferList() {
+            if (!document.getElementById("filterCostCenter").value) { alert("اختر الموقع"); return; }
+            fetch('/BankTransfer/LoadList', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    DateFrom: document.getElementById("fromDate").value,
+                    DateTo: document.getElementById("toDate").value,
+                    CostCenterId: Number(document.getElementById("filterCostCenter").value)
+                })
+            }).then(r => r.text()).then(html => document.getElementById("tableContainer").innerHTML = html);
+        }
+
+        function selectRow(row) {
+            document.querySelectorAll(".data-row").forEach(r => r.classList.remove("selected"));
+            row.classList.add("selected");
+            selectedId = row.dataset.id;
+            document.getElementById("id").value = selectedId;
+            document.getElementById("processDate").value = row.dataset.date || "";
+            document.getElementById("toAcc").value = row.dataset.toacc || "";
+            document.getElementById("fromAcc").value = row.dataset.fromacc || "";
+            document.getElementById("invoiceCode").value = row.dataset.invoice || "";
+            document.getElementById("notes").value = row.dataset.notes || "";
+            document.getElementById("total").value = row.dataset.total || 0;
+            document.getElementById("dealerId").value = row.dataset.dealerid || "";
+            document.getElementById("bankId").value = row.dataset.bankid || "";
+            document.getElementById("btnEdit").disabled = false;
+        }
+
+        function newRow() {
+            selectedId = 0; document.getElementById("id").value = "";
+            document.querySelectorAll(".section-container input, .section-container select").forEach(x => { if(x.type !== 'date') x.value = ""; });
+            document.getElementById("processDate").valueAsDate = new Date();
+            document.getElementById("total").value = 0;
+            document.getElementById("btnEdit").disabled = true;
+        }
+
+        function save() {
+            if (selectedId && selectedId > 0) { alert("استخدم زر تعديل"); return; }
+            if (!PERMS.add) { alert("غير مسموح"); return; }
+            send('/BankTransfer/Save');
+        }
+
+        function updateRow() { if (!selectedId) return; if (!PERMS.edit) { alert("غير مسموح"); return; } send('/BankTransfer/Save'); }
+
+        function send(url) {
+            const cc = document.getElementById("filterCostCenter").value;
+            if (!cc) { alert("الموقع مطلوب"); return; }
+            const dealer = document.getElementById("dealerId");
+            const bank = document.getElementById("bankId");
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    Id: selectedId || 0,
+                    ProcessDate: document.getElementById("processDate").value,
+                    CostCenterId: Number(cc),
+                    BankId: bank.value ? Number(bank.value) : null,
+                    Total: Number(document.getElementById("total").value),
+                    Notes: document.getElementById("notes").value,
+                    InvoiceCode: document.getElementById("invoiceCode").value,
+                    ToAcc: dealer.selectedIndex > 0 ? dealer.options[dealer.selectedIndex].text : "",
+                    FromAcc: bank.selectedIndex > 0 ? bank.options[bank.selectedIndex].text : ""
+                })
+            }).then(() => { alert("تم بنجاح"); loadBankTransferList(); newRow(); }).catch(e => alert(e));
+        }
+
+
+
+
+        function deleteRow() {
+            if (!selectedId) return; if (!PERMS.delete) { alert("غير مسموح"); return; }
+            if (!confirm("تأكيد الحذف؟")) return;
+            fetch('/BankTransfer/Delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(Number(selectedId))
+            }).then(() => { loadBankTransferList(); newRow(); });
+        }
+
+
+        // const CAN_REVIEW = @PermissionViewHelper.CanReview(Context).ToString().ToLower();
+
+                function reviewClicked(){
+            if (!CAN_REVIEW) {
+                alert("ليس لديك صلاحية");
+                return;
+            }
+            reviewRow();
+        }
+
+                         function reviewRow() {
+
+            if (!CAN_REVIEW) {
+                alert("ليس لديك صلاحية");
+                return;
+            }
+
+            if (!selectedId || selectedId === 0) {
+                alert("اختر صفًا أولاً");
+                return;
+            }
+
+            const row = document.querySelector(`.data-row[data-id='${selectedId}']`);
+            if (!row) {
+                alert("الصف غير موجود");
+                return;
+            }
+
+            const isReviewed = row.dataset.reviewed === "true";
+            if (isReviewed && !confirm("تمت المراجعة بالفعل، هل تريد إلغاء المراجعة؟"))
+                return;
+
+            fetch('/BankTransfer/Review', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: selectedId, reviewed: !isReviewed })
+            })
+            .then(r => {
+                if (!r.ok) return r.text().then(t => { throw t; });
+                return r.json();
+            })
+            .then(() => {
+                row.dataset.reviewed = (!isReviewed).toString();
+                const chk = row.querySelector(".review-check");
+                if (chk) chk.checked = !isReviewed;
+
+                alert(!isReviewed ? "تمت المراجعة بنجاح" : "تم إلغاء المراجعة");
+            })
+            .catch(e => alert(e));
+        }
+
+
+        function filterTable() {
+            const inputs = document.querySelectorAll(".col-search");
+            const rows = document.querySelectorAll("tbody tr");
+            rows.forEach(row => {
+                let show = true;
+                inputs.forEach(input => {
+                    const val = input.value.toLowerCase();
+                    if (val && !row.children[input.dataset.col].textContent.toLowerCase().includes(val)) show = false;
+                });
+                row.style.display = show ? "" : "none";
+            });
+        }
+
+        function safeAction(a, fn) { if (!PERMS[a]) { alert("غير مسموح"); return; } fn(); }
+    </script>
+</body>
+</html>

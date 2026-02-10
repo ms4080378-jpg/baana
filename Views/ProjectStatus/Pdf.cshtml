@@ -1,0 +1,60 @@
+﻿@using elbanna.Models.ViewModels
+@model ProjectStatusPageVM
+
+<style>
+    body {
+        font-family: Tahoma;
+        font-size: 11px;
+        direction: rtl;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        border: 1px solid #333;
+        padding: 4px;
+        text-align: center;
+    }
+
+    th {
+        background: #d6f0b8;
+    }
+</style>
+
+<h3 style="text-align:center">الموقف التنفيذي للمشروع</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>رقم العمارة</th>
+            <th>المقاول</th>
+            <th>الإجمالي</th>
+            <th>المطلوب</th>
+
+            @foreach (var f in Model.Floors)
+            {
+                <th>@f</th>
+            }
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var r in Model.Rows)
+        {
+            <tr>
+                <td>@r.BuildingNo</td>
+                <td>@r.Dealer</td>
+                <td>@r.Total</td>
+                <td>@r.Required</td>
+
+                @foreach (var f in Model.Floors)
+                {
+                    <td>@r.Floors[f]</td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>

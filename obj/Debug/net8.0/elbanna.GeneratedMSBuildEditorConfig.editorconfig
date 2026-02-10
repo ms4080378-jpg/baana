@@ -1,0 +1,195 @@
+is_global = true
+build_property.TargetFramework = net8.0
+build_property.TargetFrameworkIdentifier = .NETCoreApp
+build_property.TargetFrameworkVersion = v8.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = elbanna
+build_property.RootNamespace = elbanna
+build_property.ProjectDir = F:\Banna_usercols_fixed1\elbanna\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 8.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = F:\Banna_usercols_fixed1\elbanna
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 8.0
+build_property.EnableCodeStyleSeverity = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Auth/AccessDenied.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxBY2Nlc3NEZW5pZWQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Auth/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxMb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/BankTransfer/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQmFua1RyYW5zZmVyXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/BankTransfer/_BankTransferTable.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQmFua1RyYW5zZmVyXF9CYW5rVHJhbnNmZXJUYWJsZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/CashIn/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FzaEluXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/ChequeRec/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2hlcXVlUmVjXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/ChequeRec/_ChequeRecTable.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2hlcXVlUmVjXF9DaGVxdWVSZWNUYWJsZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Cheque/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2hlcXVlXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/CostCenter/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29zdENlbnRlclxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/CreditAccount/Popup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3JlZGl0QWNjb3VudFxQb3B1cC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/CustodyStage/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3VzdG9keVN0YWdlXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Daily/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGFpbHlcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Dealer/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGVhbGVyXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Inspect/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSW5zcGVjdFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/intrns/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcaW50cm5zXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/InvoiceCode/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSW52b2ljZUNvZGVcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Invoice/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSW52b2ljZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/ItemPurchase/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSXRlbVB1cmNoYXNlXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Item/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSXRlbVxDcmVhdGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Item/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSXRlbVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/OutTrns/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcT3V0VHJuc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/PayInvoice/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUGF5SW52b2ljZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/ProjectStatus/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHJvamVjdFN0YXR1c1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/ProjectStatus/Pdf.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHJvamVjdFN0YXR1c1xQZGYuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/ProjectStatus/_ProjectStatusHeader.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHJvamVjdFN0YXR1c1xfUHJvamVjdFN0YXR1c0hlYWRlci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/ProjectStatus/_ProjectStatusPdf.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHJvamVjdFN0YXR1c1xfUHJvamVjdFN0YXR1c1BkZi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/ProjectStatus/_ProjectStatusTable.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHJvamVjdFN0YXR1c1xfUHJvamVjdFN0YXR1c1RhYmxlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Purchase/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHVyY2hhc2VcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Reports/BalanceSheet.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVwb3J0c1xCYWxhbmNlU2hlZXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Reports/BalanceSheetPrint.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVwb3J0c1xCYWxhbmNlU2hlZXRQcmludC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Reports/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVwb3J0c1xfTGF5b3V0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Shared/_LoginLayout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9Mb2dpbkxheW91dC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/StockTransfer/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU3RvY2tUcmFuc2ZlclxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Stores/In.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU3RvcmVzXEluLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Users/Form.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVXNlcnNcRm9ybS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Users/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVXNlcnNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Users/Permissions.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVXNlcnNcUGVybWlzc2lvbnMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Users/ScreenPermissions.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVXNlcnNcU2NyZWVuUGVybWlzc2lvbnMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Users/SitePermissions.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVXNlcnNcU2l0ZVBlcm1pc3Npb25zLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/Users/_UserPermissionsToolbar.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVXNlcnNcX1VzZXJQZXJtaXNzaW9uc1Rvb2xiYXIuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/Banna_usercols_fixed1/elbanna/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 

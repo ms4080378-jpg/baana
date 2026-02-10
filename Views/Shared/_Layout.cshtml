@@ -1,0 +1,41 @@
+﻿@{
+    ViewData["HideMenu"] = true;
+}
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
+
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+
+    @if (ViewData["HideMenu"] == null)
+    {
+        <ul class="nav">
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="Purchase" asp-action="Index">
+                    المشتريات
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="PayInvoice" asp-action="Index">
+                    مستخلصات المستخلصات
+                </a>
+            </li>
+        </ul>
+    }
+
+    <!-- ⬇⬇⬇ أهم سطر -->
+    <div class="container">
+        @RenderBody()
+    </div>
+    <!-- ⬆⬆⬆ -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+</body>
+</html>

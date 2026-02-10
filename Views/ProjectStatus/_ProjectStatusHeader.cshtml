@@ -1,0 +1,14 @@
+﻿@model elbanna.Models.ViewModels.ProjectStatusPageVM
+<thead>
+    <tr>
+        <th style="min-width:120px">رقم العمارة</th>
+        <th style="min-width:120px">المرحلة</th>
+        <th style="min-width:120px">المقاول</th>
+        @foreach (var floor in Model.Floors)
+        {
+            <th style="min-width:60px">@floor</th>
+        }
+        <th class="total">الإجمالي</th>
+        <th class="required">المطلوب</th>
+    </tr>
+</thead>

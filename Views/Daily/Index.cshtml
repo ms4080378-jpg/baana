@@ -1,0 +1,700 @@
+@using elbanna.Models
+@using elbanna.Helpers
+@{
+    bool canPrint = PermissionHelper.Can((int)Screens.Daily, "Print", Context);
+    bool canReview = PermissionViewHelper.CanReview(Context);
+    Layout = null;
+}
+@model elbanna.ViewModels.DailyIndexVM
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>اليومية - المكتب</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background-color: #e6f5d0;
+            color: black;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Toolbar */
+        .topbar {
+            background: #dff2c8;
+            border-bottom: 2px solid #9bbb59;
+            padding: 5px 10px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .topbar button {
+                background: linear-gradient(to bottom, #ffffff 0%, #f3f9eb 100%);
+                border: 1px solid #9bbb59;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 13px;
+                color: black;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                border-radius: 4px;
+                transition: 0.2s;
+            }
+
+                .topbar button:hover {
+                    background: #eaf7d9;
+                    border-color: #6aa84f;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .topbar button:active {
+                    transform: translateY(1px);
+                }
+
+                .topbar button.btn-close {
+                    color: #cc0000;
+                }
+
+                .topbar button.btn-save {
+                    color: #2e7d32;
+                }
+
+                .topbar button.btn-new {
+                    color: #1565c0;
+                }
+
+        /* Filter & Entry Bars */
+        .section-container {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: #f4fbe9;
+            border: 1px dashed #9bbb59;
+            border-radius: 4px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: bold;
+            color: black;
+            min-width: 60px;
+        }
+
+        input, select, textarea {
+            border: 1px solid #9bbb59;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: Tahoma;
+            font-size: 13px;
+            color: black;
+            background-color: white;
+        }
+
+            input:focus, select:focus, textarea:focus {
+                outline: none;
+                border-color: #4a6125;
+                box-shadow: 0 0 4px rgba(155, 187, 89, 0.3);
+            }
+
+        /* Table Grid */
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            margin: 10px;
+            border: 1px solid #9bbb59;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 2200px;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 100%);
+            border: 1px solid #ccc;
+            padding: 8px;
+            z-index: 10;
+            font-weight: bold;
+            color: black;
+            text-align: center;
+            border-bottom: 2px solid #9bbb59;
+        }
+
+        td {
+            border: 1px solid #eee;
+            padding: 6px;
+            text-align: center;
+            color: black;
+            white-space: nowrap;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fcfdfa;
+        }
+
+        tr:hover {
+            background-color: #f1f8e9;
+            cursor: pointer;
+        }
+
+        tr.selected-row {
+            background-color: #2b78e4 !important;
+            color: white !important;
+        }
+
+            tr.selected-row td {
+                color: white !important;
+            }
+
+        /* Settings Menu */
+        .settings-menu {
+            position: relative;
+        }
+
+        .settings-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #ffffff;
+            border: 1px solid #9bbb59;
+            min-width: 180px;
+            z-index: 9999;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+            .settings-dropdown div {
+                padding: 8px 12px;
+                cursor: pointer;
+                border-bottom: 1px solid #eee;
+                color: black;
+            }
+
+                .settings-dropdown div:hover {
+                    background: #f0f7e6;
+                }
+
+        /* Footer */
+        tfoot td {
+            background: #f2f2f2;
+            font-weight: bold;
+            position: sticky;
+            bottom: 0;
+            z-index: 1;
+            border-top: 2px solid #9bbb59;
+        }
+
+        .search-row input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 2px;
+            font-size: 11px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <button onclick="safeAction('add', newEntry)" class="btn-new"><span>📄</span> جديد</button>
+        <button onclick="safeAction('add', save)" class="btn-save"><span>💾</span> حفظ</button>
+        <button onclick="safeAction('edit', editSelected)"><span>✏️</span> تعديل</button>
+        <button onclick="safeAction('del', deleteRow)" class="btn-close"><span>🗑️</span> حذف</button>
+        <button onclick="reviewClicked()"><span>🔎</span> مراجعة</button>
+        <button onclick="spendClicked()"><span>💵</span> صرف</button>
+
+        <div class="settings-menu">
+            <button onclick="toggleSettings()"><span>⚙️</span> الإعدادات</button>
+            <div id="settingsMenu" class="settings-dropdown">
+                <div onclick="goTo('/Dealer/Index')">متعامل جديد</div>
+                <div onclick="goTo('/CreditAccount/Popup')">عهدة جديدة</div>
+                <div onclick="goTo('/InvoiceCode/Index')">إعدادات الإيصالات</div>
+                <div onclick="goTo('/CostCenter/Index')">إعدادات المواقع</div>
+            </div>
+        </div>
+
+        <button onclick="safeAction('print', exportExcel)"><span>📊</span> EXCEL</button>
+        <button onclick="loadDaily()"><span>📋</span> عرض القائمة</button>
+        <button onclick="closePage()" class="btn-close"><span>❌</span> غلق</button>
+    </div>
+
+    <div class="section-container">
+        <!-- Filters -->
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>من</label>
+                <input type="date" id="fromDate" value="@Model.FromDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="field-group">
+                <label>إلى</label>
+                <input type="date" id="toDate" value="@Model.ToDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="field-group">
+                <label>الموقع</label>
+                <select id="filterCostCenter">
+                    <option value="">-- الكل --</option>
+                    @foreach (var c in Model.CostCenters)
+                    {
+                        <option value="@c.id">@c.costCenter</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <!-- Entry Form -->
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>التاريخ</label>
+                <input type="date" id="date" value="@DateTime.Today.ToString("yyyy-MM-dd")" onchange="keepToday(this)" />
+            </div>
+            <div class="field-group">
+                <label>البيان</label>
+                <select id="dealerId" onchange="onDealerChange(this)" style="width:200px">
+                    <option value="">-- اختر البيان --</option>
+                    @foreach (var d in Model.Dealers)
+                    {
+                        <option value="@d.id">@d.dealer</option>
+                    }
+                </select>
+            </div>
+            <div class="field-group">
+                <label>الكود</label>
+                <input type="text" id="dealerCode" readonly style="width:80px" />
+            </div>
+            <div class="field-group">
+                <label>الرقم القومي</label>
+                <input type="text" id="nationalId" readonly />
+            </div>
+        </div>
+
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>القيمة</label>
+                <input type="number" id="total" value="0" style="width:100px" />
+            </div>
+            <div class="field-group">
+                <label>الخصم</label>
+                <input type="number" id="discount" value="0" style="width:100px" />
+            </div>
+            <div class="field-group">
+                <label>الصافي</label>
+                <input type="number" id="net" readonly style="width:100px; font-weight:bold" />
+            </div>
+            <div class="field-group">
+                <input list="fromAccList" id="fromAccName" placeholder="من عهدة" />
+                <datalist id="fromAccList">
+                    @foreach (var a in Model.CreditAccounts)
+                    {
+                        <option value="@a.creditAcc" data-id="@a.id"></option>
+                    }
+                </datalist>
+            </div>
+            <div class="field-group">
+                <input list="toAccList" id="toAccName" placeholder="إلى عهدة" />
+                <datalist id="toAccList">
+                    @foreach (var a in Model.CreditAccounts)
+                    {
+                        <option value="@a.creditAcc" data-id="@a.id"></option>
+                    }
+                </datalist>
+            </div>
+        </div>
+
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>الإيصال</label>
+                <input type="text" id="receipt" />
+            </div>
+            <div class="field-group">
+                <label>ملاحظات</label>
+                <textarea id="notes" style="width:500px; height:40px"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table id="dailyTable">
+            <thead>
+                <tr>
+                    <th>المستخدم</th>
+                    <th>التاريخ</th>
+                    <th>الموقع</th>
+                    <th>الكود</th>
+                    <th>البيان</th>
+                    <th>الإيصال</th>
+                    <th>الإجمالي</th>
+                    <th>الخصم</th>
+                    <th>الصافي</th>
+                    <th>من عهدة</th>
+                    <th>إلى عهدة</th>
+                    <th>ملاحظات</th>
+                    <th>تمت</th>
+                    <th>تعديل المستخدم</th>
+                    <th>صرف</th>
+                </tr>
+                <tr class="search-row">
+                    <th><input type="text" placeholder="بحث" /></th>
+                    <th><input type="text" placeholder="بحث" /></th>
+                    <th><input type="text" placeholder="بحث" /></th>
+                    <th><input type="text" placeholder="بحث" /></th>
+                    <th><input type="text" placeholder="بحث" /></th>
+                    <th><input type="text" placeholder="بحث" /></th>
+                    <th><input type="text" placeholder="بحث" /></th>
+                    <th><input type="text" placeholder="بحث" /></th>
+                    <th><input type="text" placeholder="بحث" /></th>
+                    <th><input type="text" placeholder="بحث" /></th>
+                    <th><input type="text" placeholder="بحث" /></th>
+                    <th><input type="text" placeholder="بحث" /></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="6">الإجمالي</td>
+                    <td id="sumTotal">0</td>
+                    <td></td>
+                    <td id="sumNet">0</td>
+                    <td colspan="6"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <script>
+        const PERMS = {
+            add: @PermissionHelper.Can((int)Screens.Daily, "Add", Context).ToString().ToLower(),
+            edit: @PermissionHelper.Can((int)Screens.Daily, "Edit", Context).ToString().ToLower(),
+            del: @PermissionHelper.Can((int)Screens.Daily, "Delete", Context).ToString().ToLower(),
+            print: @PermissionHelper.Can((int)Screens.Daily, "Print", Context).ToString().ToLower()
+        };
+         const CAN_REVIEW = @PermissionViewHelper.CanReview(Context).ToString().ToLower();
+
+        let selectedId = 0;
+        let selectedRow = null;
+        let isSelectingRow = false;
+        let userChangedDate = false;
+        let lastAutoDate = new Date().toISOString().split("T")[0];
+        let selectedRows = new Set();
+        let isEditMode = false;
+
+        const totalInput = document.getElementById("total");
+        const discountInput = document.getElementById("discount");
+        const netInput = document.getElementById("net");
+
+        function calcNet() {
+            const t = parseFloat(totalInput.value) || 0;
+            const d = parseFloat(discountInput.value) || 0;
+            netInput.value = (t - d).toFixed(2);
+        }
+
+        totalInput.addEventListener("input", calcNet);
+        discountInput.addEventListener("input", calcNet);
+
+        function loadDaily() {
+            const from = fromDate.value;
+            const to = toDate.value;
+            const costCenterId = filterCostCenter.value;
+
+            if (!from || !to) { alert("من فضلك حدد (من – إلى)"); return; }
+
+            let url = `/Daily/List?from=${from}&to=${to}`;
+            if (costCenterId !== "") url += `&costCenterId=${costCenterId}`;
+
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    const tbody = document.getElementById("tbody");
+                    tbody.innerHTML = "";
+                    let sumT = 0, sumN = 0;
+
+                    data.forEach(d => {
+                        sumT += Number(d.total || 0);
+                        sumN += Number(d.net || 0);
+
+                        const tr = document.createElement("tr");
+                        tr.dataset.id = d.id;
+                        tr.dataset.spend = d.spend === true ? "true" : "false";
+
+                        tr.innerHTML = `
+                            <td>${d.userName || ""}</td>
+                            <td>${d.date || ""}</td>
+                            <td>${d.costCenter || ""}</td>
+                            <td>${d.dealerCode || ""}</td>
+                            <td>${d.dealer || ""}</td>
+                            <td>${d.receipt || ""}</td>
+                            <td>${d.total || 0}</td>
+                            <td>${d.discount || 0}</td>
+                            <td>${d.net || 0}</td>
+                            <td>${d.fromAcc || ""}</td>
+                            <td>${d.toAcc || ""}</td>
+                            <td>${d.notes || ""}</td>
+                            <td><input type="checkbox" ${d.done ? "checked" : ""} disabled></td>
+                            <td>${d.editUser || ""}</td>
+                            <td><input type="checkbox" ${d.spend ? "checked" : ""} disabled></td>
+                        `;
+                        tr.onclick = () => selectRow(tr, d);
+                        tbody.appendChild(tr);
+                    });
+                    document.getElementById("sumTotal").innerText = sumT.toFixed(2);
+                    document.getElementById("sumNet").innerText = sumN.toFixed(2);
+                })
+                .catch(err => alert("خطأ في تحميل البيانات"));
+        }
+
+        function selectRow(row, data) {
+            document.querySelectorAll("#dailyTable tbody tr.selected-row").forEach(r => r.classList.remove("selected-row"));
+            row.classList.add("selected-row");
+            selectedRow = row;
+            selectedId = data.id;
+
+            document.getElementById("date").value = data.date || "";
+            document.getElementById("dealerCode").value = data.dealerCode || "";
+            document.getElementById("dealerId").value = data.dealerId || "";
+            document.getElementById("nationalId").value = data.nationalId || "";
+            document.getElementById("total").value = data.total || 0;
+            document.getElementById("discount").value = data.discount || 0;
+            document.getElementById("net").value = data.net || 0;
+            document.getElementById("fromAccName").value = data.fromAcc || "";
+            document.getElementById("toAccName").value = data.toAcc || "";
+            document.getElementById("notes").value = data.notes || "";
+            document.getElementById("receipt").value = data.receipt || "";
+            if (data.costCenterId) document.getElementById("filterCostCenter").value = data.costCenterId;
+            calcNet();
+        }
+
+        function save() {
+            if (selectedId && selectedId > 0) { alert("هذا السجل موجود بالفعل، استخدم زر (تعديل)"); return; }
+            if (!PERMS.add) { alert("غير مسموح لك بالحفظ"); return; }
+
+            const cc = document.getElementById("filterCostCenter");
+            if (!cc.value || cc.value === "") { alert("من فضلك اختر موقع صحيح قبل الحفظ"); return; }
+
+            if (!confirm("هل تريد حفظ السجل الجديد؟")) return;
+
+            const model = getModel(0);
+            fetch("/Daily/Save", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(model)
+            }).then(r => r.text()).then(() => {
+                alert("تم الحفظ بنجاح");
+                loadDaily();
+                clearForm();
+            }).catch(err => alert(err));
+        }
+
+        function editSelected() {
+            if (!selectedId) { alert("من فضلك اختر صفًا أولاً"); return; }
+            if (!PERMS.edit) { alert("غير مسموح لك بالتعديل"); return; }
+            if (!confirm("هل تريد تعديل هذا السجل؟")) return;
+
+            const model = getModel(selectedId);
+            fetch("/Daily/Save", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(model)
+            }).then(r => r.text()).then(() => {
+                alert("تم التعديل بنجاح");
+                loadDaily();
+                clearForm();
+            }).catch(err => alert(err));
+        }
+
+        function getModel(id) {
+            const cc = document.getElementById("filterCostCenter");
+            return {
+                Id: id,
+                Date: document.getElementById("date").value,
+                CostCenterId: parseInt(cc.value),
+                CostCenterName: cc.options[cc.selectedIndex].text,
+                DealerCode: document.getElementById("dealerCode").value,
+                DealerName: document.getElementById("dealerId").options[document.getElementById("dealerId").selectedIndex].text,
+                NationalId: document.getElementById("nationalId").value,
+                Total: Number(document.getElementById("total").value),
+                Discount: Number(document.getElementById("discount").value),
+                Net: Number(document.getElementById("net").value),
+                FromAccName: document.getElementById("fromAccName").value,
+                ToAccName: document.getElementById("toAccName").value,
+                Receipt: document.getElementById("receipt").value.trim(),
+                Notes: document.getElementById("notes").value
+            };
+        }
+
+        function deleteRow() {
+            if (!selectedId) { alert("اختر صف أولاً"); return; }
+            if (!PERMS.del) { alert("غير مسموح لك بالحذف"); return; }
+            if (!confirm("هل أنت متأكد من الحذف؟")) return;
+            fetch(`/Daily/Delete/${selectedId}`, { method: "POST" }).then(() => {
+                loadDaily();
+                clearForm();
+            });
+        }
+
+        function newEntry() { clearForm(); }
+        function clearForm() {
+            selectedId = 0; selectedRow = null;
+            document.querySelectorAll(".selected-row").forEach(r => r.classList.remove("selected-row"));
+            document.getElementById("dealerId").value = "";
+            document.getElementById("dealerCode").value = "";
+            document.getElementById("nationalId").value = "";
+            document.getElementById("total").value = 0;
+            document.getElementById("discount").value = 0;
+            document.getElementById("net").value = 0;
+            document.getElementById("fromAccName").value = "";
+            document.getElementById("toAccName").value = "";
+            document.getElementById("notes").value = "";
+            document.getElementById("receipt").value = "";
+        }
+
+        function toggleSettings() {
+            const menu = document.getElementById("settingsMenu");
+            menu.style.display = (menu.style.display === "block") ? "none" : "block";
+        }
+        document.addEventListener("click", (e) => {
+            if (!e.target.closest(".settings-menu")) document.getElementById("settingsMenu").style.display = "none";
+        });
+
+        function closePage() { if (confirm("هل تريد الخروج؟")) window.location.href = "/Home/Index"; }
+        function goTo(url) { window.open(url, "_blank"); }
+
+        function onDealerChange(select) {
+            const id = select.value;
+            if (!id) { document.getElementById("dealerCode").value = ""; document.getElementById("nationalId").value = ""; return; }
+            fetch(`/Daily/GetDealerInfo?id=${id}`).then(r => r.json()).then(d => {
+                document.getElementById("dealerCode").value = d.code || "";
+                document.getElementById("nationalId").value = d.nationalId || "";
+            });
+        }
+
+        function exportExcel() {
+            const table = document.getElementById("dailyTable");
+            const wb = XLSX.utils.table_to_book(table, { sheet: "Daily" });
+            XLSX.writeFile(wb, `Daily_${fromDate.value}.xlsx`);
+        }
+
+                function reviewClicked() {
+            if (!CAN_REVIEW) {
+                alert("ليس لديك صلاحية");
+                return;
+            }
+            toggleReview(); // استدعاء مباشر
+        }
+
+        function spendClicked() {
+            if (!CAN_REVIEW) {
+                alert("ليس لديك صلاحية");
+                return;
+            }
+            toggleSpend(); // استدعاء مباشر
+        }
+
+                function toggleReview() {
+
+            if (!CAN_REVIEW) {
+                alert("ليس لديك صلاحية");
+                return;
+            }
+
+            const rows = [...document.querySelectorAll("#dailyTable tbody tr.selected-row")];
+            if (rows.length === 0) {
+                alert("اختر صفًا أو أكثر");
+                return;
+            }
+
+            if (!confirm(`هل تريد مراجعة ${rows.length} سجل؟`)) return;
+
+            const ids = rows.map(r => parseInt(r.dataset.id));
+
+            fetch("/Daily/SetReviewedBulk", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ids, value: true })
+            })
+            .then(r => {
+                if (!r.ok) throw "ليس لديك صلاحية";
+                return r.text();
+            })
+            .then(() => loadDaily())
+            .catch(err => alert(err));
+        }
+
+               function toggleSpend() {
+
+            if (!CAN_REVIEW) {
+                alert("ليس لديك صلاحية");
+                return;
+            }
+
+            const rows = [...document.querySelectorAll("#dailyTable tbody tr.selected-row")];
+            if (rows.length === 0) {
+                alert("اختر صفًا أو أكثر");
+                return;
+            }
+
+            if (!confirm(`هل تريد صرف ${rows.length} سجل؟`)) return;
+
+            const ids = rows.map(r => parseInt(r.dataset.id));
+
+            fetch("/Daily/SetSpendBulk", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ids, value: true })
+            })
+            .then(r => {
+                if (!r.ok) throw "ليس لديك صلاحية";
+                return r.text();
+            })
+            .then(() => loadDaily())
+            .catch(err => alert(err));
+        }
+
+
+        function safeAction(p, fn) { if (!PERMS[p]) { alert("غير مسموح لك"); return; } fn(); }
+
+        document.querySelectorAll(".search-row input").forEach((input, index) => {
+            input.addEventListener("keyup", () => {
+                const filter = input.value.toLowerCase();
+                const rows = document.querySelectorAll("#tbody tr");
+                rows.forEach(row => {
+                    const text = row.cells[index].innerText.toLowerCase();
+                    row.style.display = text.includes(filter) ? "" : "none";
+                });
+            });
+        });
+
+        loadDaily();
+    </script>
+</body>
+</html>

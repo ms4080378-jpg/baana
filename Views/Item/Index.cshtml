@@ -1,0 +1,306 @@
+﻿@model IEnumerable<Item>
+@{
+    Layout = null;
+}
+@using elbanna.Helpers
+@{
+    int SCREEN_ID = (int)Screens.Item;
+}
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>إدارة الأصناف</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background-color: #e6f5d0;
+            color: black;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Toolbar */
+        .topbar {
+            background: #dff2c8;
+            border-bottom: 2px solid #9bbb59;
+            padding: 5px 10px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .topbar button {
+                background: linear-gradient(to bottom, #ffffff 0%, #f3f9eb 100%);
+                border: 1px solid #9bbb59;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 13px;
+                color: black;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                border-radius: 4px;
+                transition: 0.2s;
+            }
+
+                .topbar button:hover {
+                    background: #eaf7d9;
+                    border-color: #6aa84f;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .topbar button:active {
+                    transform: translateY(1px);
+                }
+
+                .topbar button.btn-close {
+                    color: #cc0000;
+                }
+
+                .topbar button.btn-save {
+                    color: #2e7d32;
+                }
+
+                .topbar button.btn-new {
+                    color: #1565c0;
+                }
+
+                .topbar button:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+
+        /* Entry Section */
+        .section-container {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: #f4fbe9;
+            border: 1px dashed #9bbb59;
+            border-radius: 4px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: bold;
+            color: black;
+            min-width: 60px;
+        }
+
+        input[type="text"] {
+            border: 1px solid #9bbb59;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: Tahoma;
+            font-size: 13px;
+            color: black;
+            background-color: white;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4a6125;
+            box-shadow: 0 0 4px rgba(155, 187, 89, 0.3);
+        }
+
+        /* Table Grid */
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            margin: 10px;
+            border: 1px solid #9bbb59;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 500px;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 100%);
+            border: 1px solid #ccc;
+            padding: 8px;
+            z-index: 10;
+            font-weight: bold;
+            color: black;
+            text-align: center;
+            border-bottom: 2px solid #9bbb59;
+        }
+
+        td {
+            border: 1px solid #eee;
+            padding: 8px;
+            text-align: center;
+            color: black;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fcfdfa;
+        }
+
+        tr:hover {
+            background-color: #f1f8e9;
+            cursor: pointer;
+        }
+
+        tr.selected {
+            background-color: #2b78e4 !important;
+            color: white !important;
+        }
+
+            tr.selected td {
+                color: white !important;
+            }
+
+        .search-box {
+            width: 90%;
+            margin-top: 5px;
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <form method="post" id="itemForm">
+        <div class="topbar">
+            <button type="button" id="btnNew" onclick="safeAction('add', newItem)" class="btn-new"><span>📄</span> جديد</button>
+            <button type="button" id="btnSave" onclick="saveItem()" class="btn-save"><span>💾</span> حفظ</button>
+            <button type="button" id="btnDelete" onclick="deleteItem()" class="btn-close"><span>🗑️</span> حذف</button>
+            <button type="button" id="btnShow" onclick="showList()"><span>📋</span> عرض القائمة</button>
+            <button type="button" onclick="closePage()" class="btn-close"><span>❌</span> غلق</button>
+        </div>
+
+        <div class="section-container">
+            <div class="row-inputs">
+                <input type="hidden" name="Id" id="itemId" />
+                <div class="field-group">
+                    <label>الصنف</label>
+                    <input type="text" name="Name" id="itemName" style="width: 400px;" placeholder="أدخل اسم الصنف..." />
+                </div>
+                <div class="field-group">
+                    <label style="min-width: auto; cursor: pointer;"><input type="checkbox" name="IsStopped" id="isStopped" /> موقوف</label>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    @if (ViewBag.ShowTable == true && Model != null)
+    {
+        <div class="table-wrapper">
+            <table id="itemsTable">
+                <thead>
+                    <tr>
+                        <th>الصنف</th>
+                    </tr>
+                    <tr>
+                        <th>
+                            <input type="text" class="search-box" id="searchBox" placeholder="بحث سريع..." onkeyup="debouncedFilter()" onkeydown="return event.key !== 'Enter';" />
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr onclick="selectItem(this,'@item.Id','@item.Name')">
+                            <td>@item.Name</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <script>
+        const PERMS = {
+            add:    @PermissionHelper.Can((int)Screens.Item, "Add", Context).ToString().ToLower(),
+            edit:   @PermissionHelper.Can((int)Screens.Item, "Edit", Context).ToString().ToLower(),
+            delete: @PermissionHelper.Can((int)Screens.Item, "Delete", Context).ToString().ToLower()
+        };
+
+        function safeAction(action, fn) {
+            if (action === "add" && !PERMS.add) return alert("غير مسموح لك بالحفظ");
+            if (action === "edit" && !PERMS.edit) return alert("غير مسموح لك بالتعديل");
+            if (action === "delete" && !PERMS.delete) return alert("غير مسموح لك بالحذف");
+            fn();
+        }
+
+        function applyPermsUI() {
+            document.getElementById("btnNew").disabled = !PERMS.add;
+            document.getElementById("btnSave").disabled = !(PERMS.add || PERMS.edit);
+            document.getElementById("btnDelete").disabled = true;
+        }
+
+        let searchTimer;
+        function debouncedFilter() { clearTimeout(searchTimer); searchTimer = setTimeout(filterTable, 150); }
+
+        function filterTable() {
+            const filter = document.getElementById("searchBox").value.toLowerCase();
+            document.querySelectorAll("#itemsTable tbody tr").forEach(row => {
+                row.style.display = row.cells[0].innerText.toLowerCase().includes(filter) ? "" : "none";
+            });
+        }
+
+        function selectItem(row, id, name) {
+            document.getElementById("itemId").value = id;
+            document.getElementById("itemName").value = name;
+            document.querySelectorAll("#itemsTable tbody tr").forEach(r => r.classList.remove("selected"));
+            row.classList.add("selected");
+            document.getElementById("btnDelete").disabled = !PERMS.delete;
+        }
+
+        function newItem() {
+            document.getElementById("itemId").value = "";
+            document.getElementById("itemName").value = "";
+            document.getElementById("isStopped").checked = false;
+            document.getElementById("itemName").focus();
+            document.getElementById("btnDelete").disabled = true;
+            document.querySelectorAll("#itemsTable tbody tr").forEach(r => r.classList.remove("selected"));
+        }
+
+        function saveItem() {
+            const id = document.getElementById("itemId").value;
+            if (!document.getElementById("itemName").value.trim()) { alert("اكتب اسم الصنف"); return; }
+            safeAction(id ? "edit" : "add", () => submitTo("/Item/Save"));
+        }
+
+        function deleteItem() {
+            if (!document.getElementById("itemId").value) return;
+            if (!confirm("هل أنت متأكد من الحذف؟")) return;
+            safeAction("delete", () => submitTo("/Item/Delete"));
+        }
+
+        function showList() { submitTo("/Item/ShowList"); }
+        function submitTo(url) { const f = document.getElementById("itemForm"); f.action = url; f.submit(); }
+        function closePage() { window.location.href = "/Home/Index"; }
+
+        document.addEventListener("DOMContentLoaded", applyPermsUI);
+    </script>
+</body>
+</html>

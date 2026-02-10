@@ -1,0 +1,102 @@
+﻿@model elbanna.ViewModels.BalanceSheetVM
+@{
+    Layout = null; // مهم جدًا للطباعة و PDF
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <title>تقرير الأرصدة</title>
+
+    <style>
+        body {
+            font-family: Tahoma;
+            direction: rtl;
+            font-size: 13px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #000;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+        }
+
+            .header img {
+                height: 70px;
+            }
+
+            .header .title {
+                text-align: center;
+                flex: 1;
+                font-size: 18px;
+                font-weight: bold;
+            }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #000;
+            padding: 6px;
+            text-align: center;
+        }
+
+        th {
+            background: #eee;
+        }
+
+        tfoot th {
+            background: #ddd;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- الهيدر -->
+    <div class="header">
+        <img src="~/images/company-logo.png" />
+        <div class="title">
+            تقرير الأرصدة<br />
+            <small>@DateTime.Now.ToString("dd/MM/yyyy")</small>
+        </div>
+        <div></div>
+    </div>
+
+    <!-- الجدول -->
+    <table>
+        <thead>
+            <tr>
+                <th>التاجر</th>
+                <th>مركز التكلفة</th>
+                <th>الرصيد</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.Results)
+            {
+                <tr>
+                    <td>@r.dealer</td>
+                    <td>@r.costcenter</td>
+                    <td>@r.balance.ToString("N2")</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="2">الإجمالي</th>
+                <th>
+                    @Model.Results.Sum(x => x.balance).ToString("N2")
+                </th>
+            </tr>
+        </tfoot>
+    </table>
+
+</body>
+</html>

@@ -1,0 +1,71 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>غير مسموح</title>
+    <style>
+        body {
+            font-family: Tahoma;
+            background: #e6f5d0;
+            direction: rtl;
+            margin: 0
+        }
+
+        .box {
+            width: 520px;
+            margin: 140px auto;
+            background: #fff;
+            border: 1px solid #9bbb59
+        }
+
+        .head {
+            background: #dff2c8;
+            border-bottom: 1px solid #9bbb59;
+            padding: 10px;
+            font-weight: bold;
+            text-align: center
+        }
+
+        .content {
+            padding: 18px;
+            text-align: center
+        }
+
+        .warn {
+            margin: 12px auto;
+            padding: 10px;
+            border: 1px solid #b94a48;
+            background: #f2dede;
+            font-weight: bold;
+            width: 80%
+        }
+
+        button {
+            border: 1px solid #9bbb59;
+            background: #fff;
+            padding: 6px 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0 6px
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <div class="head">غير مسموح</div>
+        <div class="content">
+            <div>لا تملك صلاحية لفتح هذه الشاشة أو تنفيذ هذا الإجراء.</div>
+            <div class="warn">لو شايف إن ده خطأ: راجع مسئول النظام أو افتح صلاحيات المستخدم.</div>
+            <div>
+                <button onclick="history.back()">رجوع</button>
+                <button onclick="location.href='/'">الرئيسية</button>
+                <button onclick="location.href='@Url.Action("Logout", "Auth")'">تسجيل خروج</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

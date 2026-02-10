@@ -1,0 +1,290 @@
+﻿@using elbanna.Helpers
+@{
+    int SCREEN_ID = (int)Screens.Cheque;
+    bool canAdd = PermissionHelper.Can(SCREEN_ID, "Add", Context);
+    bool canEdit = PermissionHelper.Can(SCREEN_ID, "Edit", Context);
+    bool canDelete = PermissionHelper.Can(SCREEN_ID, "Delete", Context);
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>شيكات</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background-color: #e6f5d0;
+            color: black;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .topbar {
+            background: #dff2c8;
+            border-bottom: 2px solid #9bbb59;
+            padding: 5px 10px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .topbar button {
+                background: linear-gradient(to bottom, #ffffff 0%, #f3f9eb 100%);
+                border: 1px solid #9bbb59;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 13px;
+                color: black;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                border-radius: 4px;
+                transition: 0.2s;
+            }
+
+                .topbar button:hover {
+                    background: #eaf7d9;
+                    border-color: #6aa84f;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .topbar button.btn-close {
+                    color: #cc0000;
+                }
+
+                .topbar button.btn-save {
+                    color: #2e7d32;
+                }
+
+                .topbar button.btn-new {
+                    color: #1565c0;
+                }
+
+        .section-container {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: #f4fbe9;
+            border: 1px dashed #9bbb59;
+            border-radius: 4px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: bold;
+            color: black;
+            min-width: 80px;
+        }
+
+        input, select {
+            border: 1px solid #9bbb59;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: Tahoma;
+            font-size: 13px;
+            color: black;
+            background-color: white;
+        }
+
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            margin: 10px;
+            border: 1px solid #9bbb59;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 100%);
+            border: 1px solid #ccc;
+            padding: 8px;
+            z-index: 10;
+            font-weight: bold;
+            color: black;
+            text-align: center;
+            border-bottom: 2px solid #9bbb59;
+        }
+
+        td {
+            border: 1px solid #eee;
+            padding: 6px;
+            text-align: center;
+            color: black;
+            white-space: nowrap;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fcfdfa;
+        }
+
+        tr:hover {
+            background-color: #f1f8e9;
+            cursor: pointer;
+        }
+
+        tr.selected {
+            background-color: #2b78e4 !important;
+            color: white !important;
+        }
+
+            tr.selected td {
+                color: white !important;
+            }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <button onclick="safeAction('add', newRow)" class="btn-new"><span>+</span> جديد</button>
+        <button onclick="safeAction('add', save)" class="btn-save"><span>💾</span> حفظ</button>
+        <button onclick="loadData()"><span>🔍</span> عرض القائمة</button>
+        <button onclick="location.href='/'" class="btn-close"><span>✖</span> غلق</button>
+    </div>
+
+    <div class="section-container">
+        <input type="hidden" id="id" />
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>رقم أول ورقة</label>
+                <input id="chequeNo" autocomplete="off" />
+            </div>
+            <div class="field-group">
+                <label>البنك</label>
+                <select id="dealerId">
+                    <option value="">-- اختر البنك --</option>
+                    @foreach (var b in ViewBag.Banks)
+                    {
+                        <option value="@b.id">@b.dealer</option>
+                    }
+                </select>
+            </div>
+            <div class="field-group">
+                <label>عدد الورقات</label>
+                <input id="qty" type="number" value="0" style="width:100px" />
+            </div>
+        </div>
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>المسؤول</label>
+                <input id="respons" style="width:200px" />
+            </div>
+            <div class="field-group">
+                <label>الملاحظات</label>
+                <input id="notes" style="width:400px" />
+            </div>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>رقم أول ورقة</th>
+                    <th>البنك</th>
+                    <th>عدد الورقات</th>
+                    <th>الملاحظات</th>
+                    <th>المسؤول</th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const PERMS = {
+            add: @canAdd.ToString().ToLower(),
+            edit: @canEdit.ToString().ToLower()
+        };
+
+        function loadData() {
+            fetch('/Cheque/Load')
+                .then(r => r.json())
+                .then(data => {
+                    const tbody = document.getElementById("tbody");
+                    tbody.innerHTML = "";
+                    data.forEach(x => {
+                        let tr = document.createElement("tr");
+                        tr.innerHTML = `<td>${x.chequeNo}</td><td>${x.dealer}</td><td style="font-weight:bold">${x.qty}</td><td>${x.notes ?? ""}</td><td>${x.respons ?? ""}</td>`;
+                        tr.onclick = () => selectRow(tr, x);
+                        tbody.appendChild(tr);
+                    });
+                });
+        }
+
+        function selectRow(tr, x) {
+            document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
+            tr.classList.add("selected");
+            document.getElementById("id").value = x.id;
+            document.getElementById("chequeNo").value = x.chequeNo;
+            document.getElementById("qty").value = x.qty;
+            document.getElementById("dealerId").value = x.dealerId;
+            document.getElementById("respons").value = x.respons;
+            document.getElementById("notes").value = x.notes;
+            document.getElementById("chequeNo").readOnly = true;
+        }
+
+        function save() {
+            const idVal = parseInt(document.getElementById("id").value || "0");
+            if (idVal > 0 && !PERMS.edit) { alert("غير مسموح بالتعديل"); return; }
+            if (idVal === 0 && !PERMS.add) { alert("غير مسموح بالحفظ"); return; }
+
+            const model = {
+                id: idVal,
+                chequeNo: document.getElementById("chequeNo").value,
+                qty: document.getElementById("qty").value,
+                dealerId: document.getElementById("dealerId").value ? parseInt(document.getElementById("dealerId").value) : null,
+                respons: document.getElementById("respons").value,
+                notes: document.getElementById("notes").value
+            };
+            if (!model.chequeNo || !model.dealerId) { alert("أكمل البيانات"); return; }
+
+            fetch('/Cheque/Save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(model) })
+                .then(() => { alert("تم بنجاح"); loadData(); newRow(); }).catch(err => alert(err));
+        }
+
+        function newRow() {
+            document.getElementById("id").value = "";
+            document.getElementById("chequeNo").value = "";
+            document.getElementById("qty").value = "0";
+            document.getElementById("dealerId").value = "";
+            document.getElementById("respons").value = "";
+            document.getElementById("notes").value = "";
+            document.getElementById("chequeNo").readOnly = false;
+            document.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
+        }
+
+        function safeAction(a, fn) { if (!PERMS[a]) { alert("غير مسموح"); return; } fn(); }
+        loadData();
+    </script>
+</body>
+</html>

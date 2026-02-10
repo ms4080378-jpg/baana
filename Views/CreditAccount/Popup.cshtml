@@ -1,0 +1,260 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>عهدة جديدة</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background-color: #e6f5d0;
+            color: black;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Toolbar */
+        .topbar {
+            background: #dff2c8;
+            border-bottom: 2px solid #9bbb59;
+            padding: 5px 10px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .topbar button {
+                background: linear-gradient(to bottom, #ffffff 0%, #f3f9eb 100%);
+                border: 1px solid #9bbb59;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 13px;
+                color: black;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                border-radius: 4px;
+                transition: 0.2s;
+            }
+
+                .topbar button:hover {
+                    background: #eaf7d9;
+                    border-color: #6aa84f;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .topbar button:active {
+                    transform: translateY(1px);
+                }
+
+                .topbar button.btn-close {
+                    color: #cc0000;
+                }
+
+                .topbar button.btn-save {
+                    color: #2e7d32;
+                }
+
+                .topbar button.btn-new {
+                    color: #1565c0;
+                }
+
+        /* Entry Section */
+        .section-container {
+            padding: 10px;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: #f4fbe9;
+            border: 1px dashed #9bbb59;
+            border-radius: 4px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: bold;
+            color: black;
+            min-width: 60px;
+        }
+
+        input {
+            border: 1px solid #9bbb59;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: Tahoma;
+            font-size: 13px;
+            color: black;
+            background-color: white;
+        }
+
+            input:focus {
+                outline: none;
+                border-color: #4a6125;
+                box-shadow: 0 0 4px rgba(155, 187, 89, 0.3);
+            }
+
+        /* Table Grid */
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            margin: 10px;
+            border: 1px solid #9bbb59;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 500px;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 100%);
+            border: 1px solid #ccc;
+            padding: 8px;
+            z-index: 10;
+            font-weight: bold;
+            color: black;
+            text-align: center;
+            border-bottom: 2px solid #9bbb59;
+        }
+
+        td {
+            border: 1px solid #eee;
+            padding: 8px;
+            text-align: center;
+            color: black;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fcfdfa;
+        }
+
+        tr:hover {
+            background-color: #f1f8e9;
+        }
+
+        .col-search {
+            width: 90%;
+            margin-top: 5px;
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        const PERMS = {
+            add: @(((ViewBag.CanAdd ?? false)).ToString().ToLower()),
+            print: @(((ViewBag.CanPrint ?? false)).ToString().ToLower())
+        };
+
+        function safeAction(action, fn) {
+            if (action === 'add' && !PERMS.add) { alert('غير مسموح لك بالحفظ'); return; }
+            if (action === 'print' && !PERMS.print) { alert('غير مسموح لك بعرض القائمة'); return; }
+            fn();
+        }
+    </script>
+
+    <div class="topbar">
+        <button onclick="clearForm()" class="btn-new"><span>📄</span> جديد</button>
+        <button onclick="safeAction('add', save)" class="btn-save"><span>💾</span> حفظ</button>
+        <button onclick="safeAction('print', loadList)"><span>📋</span> عرض القائمة</button>
+        <button onclick="window.close()" class="btn-close"><span>❌</span> غلق</button>
+    </div>
+
+    <div class="section-container">
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>البيان</label>
+                <input type="text" id="creditAcc" style="width: 400px;" placeholder="أدخل اسم العهدة أو المتعامل..." />
+            </div>
+        </div>
+    </div>
+
+    <div class="table-wrapper" id="tableContainer" style="display:none">
+        <table id="tbl">
+            <thead>
+                <tr>
+                    <th>
+                        العهدة / المتعامل<br />
+                        <input type="text" class="col-search" id="colSearch" onkeyup="filterTable(this.value)" placeholder="بحث سريع...">
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        function clearForm() {
+            document.getElementById("creditAcc").value = "";
+        }
+
+        function save() {
+            const val = document.getElementById("creditAcc").value.trim();
+            if (!val) { alert("ادخل البيان"); return; }
+
+            fetch('/CreditAccount/Save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ creditAcc: val })
+            })
+            .then(r => {
+                if (!r.ok) throw "";
+                alert("تم الحفظ بنجاح");
+                clearForm();
+                loadList();
+            })
+            .catch(() => alert("فشل الحفظ"));
+        }
+
+        function loadList() {
+            fetch('/CreditAccount/GetList')
+                .then(r => r.json())
+                .then(data => {
+                    const tbody = document.getElementById("tbody");
+                    tbody.innerHTML = "";
+                    data.forEach(x => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `<td>${x.creditAcc}</td>`;
+                        tbody.appendChild(tr);
+                    });
+                    document.getElementById("tableContainer").style.display = "block";
+                });
+        }
+
+        function filterTable(value) {
+            value = value.toLowerCase();
+            const rows = document.querySelectorAll("#tbody tr");
+            rows.forEach(r => {
+                const text = r.cells[0].innerText.toLowerCase();
+                r.style.display = text.includes(value) ? "" : "none";
+            });
+        }
+    </script>
+
+</body>
+</html>

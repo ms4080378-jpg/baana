@@ -1,0 +1,272 @@
+﻿@using Microsoft.AspNetCore.Http
+@model elbanna.ViewModels.UserFormVM
+@{
+    Layout = null;
+
+    bool hasUserId = Model != null && Model.id > 0;
+
+    var currentUserJob = Context.Session.GetString("userJob") ?? "";
+    bool isReviewer = (currentUserJob == "مراجع");
+}
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>إدارة المستخدمين</title>
+
+    <style>
+        body {
+            font-family: Tahoma;
+            direction: rtl;
+            background: #e6f5d0;
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .window {
+            width: 650px;
+            max-width: calc(100% - 20px);
+            margin: 40px auto;
+            background: #fff;
+            border: 1px solid #9bbb59;
+        }
+
+        .titlebar {
+            background: #dff2c8;
+            border-bottom: 1px solid #9bbb59;
+            padding: 6px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .toolbar {
+            background: #f3fbe8;
+            border-bottom: 1px solid #9bbb59;
+            padding: 6px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+            .toolbar button {
+                border: 1px solid #9bbb59;
+                background: #fff;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-weight: bold;
+            }
+
+        .tabs {
+            background: #eef6e5;
+            border-bottom: 1px solid #9bbb59;
+            padding: 6px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+            .tabs button {
+                border: 1px solid #9bbb59;
+                background: #fff;
+                padding: 4px 10px;
+                cursor: pointer;
+                font-weight: bold;
+            }
+
+        .content {
+            padding: 20px;
+        }
+
+        .row {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .row label {
+                width: 180px;
+            }
+
+            .row input[type=text], .row input[type=number], .row select {
+                width: 300px;
+                max-width: 100%;
+                padding: 4px;
+                border: 1px solid #9bbb59;
+            }
+
+            .row input[type=checkbox] {
+                width: auto;
+            }
+
+        .tab {
+            display: none;
+        }
+
+        .msg {
+            margin: 10px 20px;
+            padding: 8px;
+            font-weight: bold;
+            border: 1px solid #9bbb59;
+            background: #f3fbe8;
+        }
+
+        .msg-error {
+            border-color: #b94a48;
+            background: #f2dede;
+        }
+
+        .validation {
+            margin: 10px 20px;
+            color: #b94a48;
+            font-weight: bold;
+        }
+
+        .hint {
+            margin: 10px 20px;
+            padding: 8px;
+            border: 1px dashed #9bbb59;
+            background: #fff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="window">
+        <div class="titlebar">إدارة المستخدمين</div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="msg">@TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="msg msg-error">@TempData["Error"]</div>
+        }
+
+        <div class="validation" asp-validation-summary="All"></div>
+
+        <form method="post"
+              action="@Url.Action("Save","Users")"
+              onsubmit="return confirmSave();">
+            @Html.AntiForgeryToken()
+
+            <div class="toolbar">
+                <button type="submit">حفظ</button>
+                <button type="button" onclick="return confirmNew('@Url.Action("Form", "Users")');">جديد</button>
+                <button type="button" onclick="return confirmClose('@Url.Action("Index", "Users")');">غلق</button>
+            </div>
+
+            @if (hasUserId)
+            {
+                @await Html.PartialAsync("_UserPermissionsToolbar", Model)
+            }
+            else
+            {
+                <div class="hint">ملحوظة: لازم تحفظ المستخدم الأول علشان تظهر أزرار الصلاحيات (زي الديسكتوب).</div>
+            }
+
+            <div class="tabs">
+                <button type="button" onclick="showTab('tab1')">بيانات المستخدم</button>
+                <button type="button" onclick="showTab('tab2')">بيانات مستخدم أخرى</button>
+            </div>
+
+            <div class="content">
+                <input type="hidden" asp-for="id" />
+
+                <div id="tab1" class="tab">
+                    <div class="row">
+                        <label>اسم المستخدم</label>
+                        <input asp-for="username" type="text" />
+                    </div>
+
+                    <div class="row">
+                        <label>الوظيفة</label>
+                        <select asp-for="jobId" asp-items="(SelectList)ViewBag.Jobs">
+                            <option value="0">-- اختر الوظيفة --</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <label>كلمة السر</label>
+                        <input asp-for="Password" type="text" />
+                        @if (isReviewer && hasUserId)
+                        {
+                            <span style="margin-right:8px;font-weight:bold;">@Model.Password</span>
+                        }
+                    </div>
+
+                    <div class="row">
+                        <label></label>
+                        <input asp-for="islogged" type="checkbox" />
+                        <span style="margin-right:6px;">تم تسجيل الدخول</span>
+                    </div>
+                </div>
+
+                <div id="tab2" class="tab">
+                    <div class="row">
+                        <label>الأيام المسموح للحفظ</label>
+                        <input asp-for="allowSaveDays" type="number" />
+                    </div>
+
+                    <div class="row">
+                        <label>الأيام المسموح للحفظ مستقبلًا</label>
+                        <input asp-for="allowFutureSaveDays" type="number" />
+                    </div>
+
+                    <div class="row">
+                        <label>الأيام المسموح للعرض</label>
+                        <input asp-for="allowShowDays" type="number" />
+                    </div>
+
+                    <hr />
+
+                    <div class="row">
+                        <input asp-for="allowShowOtherData" type="checkbox" />
+                        <label>يمكنه الإطلاع على مدخلات الآخرين</label>
+                    </div>
+
+                    <div class="row">
+                        <input asp-for="canReview" type="checkbox" />
+                        <label>يمكنه مراجعة اليومية</label>
+                    </div>
+
+                    <div class="row">
+                        <input asp-for="canPaid" type="checkbox" />
+                        <label>يمكنه التعديل على الصرف</label>
+                    </div>
+
+                    <div class="row">
+                        <input asp-for="canUpdateCustody" type="checkbox" />
+                        <label>يمكنه التعديل على عهدة قديمة في اليومية</label>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function showTab(tabId) {
+            document.getElementById('tab1').style.display = 'none';
+            document.getElementById('tab2').style.display = 'none';
+            document.getElementById(tabId).style.display = 'block';
+        }
+        showTab('tab1');
+
+        function confirmSave() { return confirm("تأكيد الحفظ؟"); }
+
+        function confirmNew(url) {
+            if (confirm("تأكيد إلغاء اي تعديل؟")) location.href = url;
+            return false;
+        }
+
+        function confirmClose(url) {
+            if (confirm("تأكيد إلغاء اي تعديل؟")) location.href = url;
+            return false;
+        }
+    </script>
+</body>
+</html>

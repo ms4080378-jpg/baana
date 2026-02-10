@@ -1,0 +1,190 @@
+﻿@model elbanna.ViewModels.BalanceSheetVM
+@using elbanna.Helpers
+@{
+    bool canPrint = PermissionHelper.Can((int)Screens.Balance, "Print", Context);
+}
+@{
+    ViewData["Title"] = "الأرصدة";
+    Layout = "_Layout";
+}
+<img src="~/images/company-logo.png"
+     style="height:90px; float:left;" />
+
+<style>
+    /* الصفحة */
+    .balance-sheet-page {
+        background-color: #e8f6d9;
+        min-height: 300px;
+        padding: 0;
+        direction: rtl;
+        font-family: Tahoma;
+    }
+
+    /* الشريط العلوي */
+    .toolbar {
+        background: #f5f5f5;
+        border-bottom: 1px solid #cfcfcf;
+        padding: 6px 10px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+        .toolbar .btn-link {
+            font-size: 14px;
+            margin-left: 12px;
+            text-decoration: none;
+            color: #000;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+            .toolbar .btn-link:hover {
+                text-decoration: underline;
+            }
+
+        .toolbar .close-btn {
+            color: #c00;
+            font-weight: bold;
+        }
+
+    /* منطقة الفلترة */
+    .filter-area {
+        padding: 25px 20px;
+    }
+
+    .filter-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .filter-label {
+        font-weight: bold;
+        min-width: 60px;
+    }
+
+    .filter-select {
+        width: 420px;
+        height: 26px;
+        border: 1px solid #999;
+        padding: 2px 5px;
+        background-color: #fff;
+        font-size: 13px;
+    }
+
+    /* الجدول */
+    table {
+        background: #fff;
+    }
+
+    th {
+        background: #efefef;
+    }
+</style>
+
+<div class="balance-sheet-page">
+
+    <!-- الشريط العلوي -->
+    <div class="toolbar">
+
+        <a class="btn-link" href="javascript:void(0)" onclick="printReport()">
+            طباعة
+        </a>
+
+        <a class="btn-link" href="javascript:void(0)" onclick="pdfReport()">
+            PDF
+        </a>
+
+        <a class="btn-link close-btn"
+           href="@Url.Action("Index", "Home")">
+            غلق
+        </a>
+    </div>
+
+
+    <!-- الفلتر -->
+    <form method="get" class="filter-area">
+        <div class="filter-row">
+            <label class="filter-label">الموقع</label>
+            <select asp-for="CostCenterId"
+                    asp-items="Model.CostCenters"
+                    class="filter-select">
+            </select>
+        </div>
+    </form>
+
+    <!-- النتائج -->
+   
+        <div class="px-3">
+            <table class="table table-bordered table-sm">
+                <thead>
+                    <tr>
+                        <th>التاجر</th>
+                        <th>مركز التكلفة</th>
+                        <th class="text-end">الرصيد</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model.Results)
+                    {
+                        <tr>
+                            <td>@r.dealer</td>
+                            <td>@r.costcenter</td>
+                            <td class="text-end">@r.balance.ToString("N2")</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="2">الإجمالي</th>
+                        <th class="text-end">
+                            @Model.Results.Sum(x => x.balance).ToString("N2")
+                        </th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    
+</div>
+<script>
+    const CAN_PRINT = @canPrint.ToString().ToLower();
+    function getCostCenterId() {
+        return document.querySelector('[name="CostCenterId"]').value;
+    }
+
+    function printReport() {
+        if (!CAN_PRINT) {
+            alert('غير مسموح لك بالطباعة');
+            return;
+        }
+        const id = getCostCenterId();
+        if (!id) {
+            alert('من فضلك اختر الموقع أولاً');
+            return;
+        }
+
+        window.open(
+            `/Reports/BalanceSheetPrint?costCenterId=${id}`,
+            '_blank'
+        );
+    }
+
+    function pdfReport() {
+        if (!CAN_PRINT) {
+            alert('غير مسموح لك بالطباعة');
+            return;
+        }
+        const id = getCostCenterId();
+        if (!id) {
+            alert('من فضلك اختر الموقع أولاً');
+            return;
+        }
+
+        window.open(
+            `/Reports/BalanceSheetPdf?costCenterId=${id}`,
+            '_blank'
+        );
+    }
+</script>

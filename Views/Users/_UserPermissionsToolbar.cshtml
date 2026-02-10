@@ -1,0 +1,23 @@
+﻿@using elbanna.Helpers
+@model elbanna.ViewModels.UserFormVM
+
+@if (Model.id > 0 && PermissionHelper.Can((int)Screens.Users, "Add", Context))
+{
+    <div class="toolbar">
+        <button type="button" onclick="goPerm('@Url.Action("ScreenPermissions", "Users", new { id = Model.id })')">
+            صلاحيات الشاشات
+        </button>
+
+        <button type="button" onclick="goPerm('@Url.Action("SitePermissions", "Users", new { id = Model.id })')">
+            صلاحيات المواقع
+        </button>
+    </div>
+
+    <script>
+        function goPerm(url) {
+            if (confirm("تأكيد إلغاء اي تعديل؟")) {
+                location.href = url;
+            }
+        }
+    </script>
+}

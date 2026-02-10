@@ -1,0 +1,139 @@
+﻿@model List<elbanna.ViewModels.UsersIndexVM>
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>إدارة المستخدمين</title>
+
+    <style>
+        body {
+            font-family: Tahoma;
+            direction: rtl;
+            background: #e6f5d0;
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .topbar {
+            background: #dff2c8;
+            border-bottom: 1px solid #9bbb59;
+            padding: 6px;
+            display: flex;
+            gap: 10px;
+        }
+
+            .topbar button {
+                background: none;
+                border: 1px solid #9bbb59;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-weight: bold;
+            }
+
+        .search-bar {
+            padding: 6px;
+            background: #f3fbe8;
+            border-bottom: 1px solid #9bbb59;
+        }
+
+            .search-bar input {
+                width: 320px;
+                max-width: 100%;
+                padding: 5px;
+                border: 1px solid #9bbb59;
+                font-family: Tahoma;
+                font-size: 13px;
+            }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            box-shadow: 0 0 4px rgba(0,0,0,.15);
+        }
+
+        th, td {
+            border: 1px solid #9bbb59;
+            padding: 6px;
+            text-align: right;
+        }
+
+        th {
+            background: #cfe8b6;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        tbody tr:hover {
+            background: #edf6e3;
+            cursor: pointer;
+        }
+
+        tr.selected {
+            background: #a8d08d !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <button type="button" onclick="location.href='@Url.Action("Form", "Users")'">مستخدم جديد</button>
+        <button type="button" onclick="location.reload()">تحديث</button>
+        <button type="button" onclick="location.href='@Url.Action("Index", "Home")'">غلق</button>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="بحث باسم المستخدم أو الوظيفة..." autocomplete="off" />
+    </div>
+
+    <table id="usersTable">
+        <thead>
+            <tr>
+                <th>اسم المستخدم</th>
+                <th>الوظيفة</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var u in Model)
+            {
+                <tr onclick="openUser(@u.id)">
+                    <td>@u.username</td>
+                    <td>@u.job</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <script>
+        function openUser(id) {
+            window.location.href = '@Url.Action("Form", "Users")' + '?id=' + id;
+        }
+
+        document.querySelectorAll("#usersTable tbody tr").forEach(tr => {
+            tr.addEventListener("click", function () {
+                document.querySelectorAll("#usersTable tbody tr").forEach(x => x.classList.remove("selected"));
+                this.classList.add("selected");
+            });
+        });
+
+        document.getElementById("searchInput").addEventListener("input", function () {
+            const filter = this.value.toLowerCase().trim();
+            const rows = document.querySelectorAll("#usersTable tbody tr");
+
+            rows.forEach(row => {
+                const username = row.cells[0].innerText.toLowerCase();
+                const job = row.cells[1].innerText.toLowerCase();
+                row.style.display = (username.includes(filter) || job.includes(filter)) ? "" : "none";
+            });
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,398 @@
+@using elbanna.Helpers
+@{
+    int SCREEN_ID = (int)Screens.CustodyStage;
+    bool canAdd = PermissionViewHelper.CanAdd(Context, SCREEN_ID);
+    bool canEdit = PermissionViewHelper.CanEdit(Context, SCREEN_ID);
+    bool canDelete = PermissionViewHelper.CanDelete(Context, SCREEN_ID);
+    bool canReview = PermissionViewHelper.CanReview(Context);
+    bool canPrint = PermissionViewHelper.CanPrint(Context, SCREEN_ID);
+    Layout = null;
+}
+@model elbanna.ViewModels.CustodyStageVM
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>عهدة مرحلة</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background-color: #e6f5d0;
+            color: black;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .topbar {
+            background: #dff2c8;
+            border-bottom: 2px solid #9bbb59;
+            padding: 5px 10px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .topbar button {
+                background: linear-gradient(to bottom, #ffffff 0%, #f3f9eb 100%);
+                border: 1px solid #9bbb59;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 13px;
+                color: black;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                border-radius: 4px;
+                transition: 0.2s;
+            }
+
+                .topbar button:hover {
+                    background: #eaf7d9;
+                    border-color: #6aa84f;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .topbar button.btn-close {
+                    color: #cc0000;
+                }
+
+                .topbar button.btn-save {
+                    color: #2e7d32;
+                }
+
+                .topbar button.btn-new {
+                    color: #1565c0;
+                }
+
+        .section-container {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: #f4fbe9;
+            border: 1px dashed #9bbb59;
+            border-radius: 4px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: bold;
+            color: black;
+            min-width: 60px;
+        }
+
+        input, select, textarea {
+            border: 1px solid #9bbb59;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: Tahoma;
+            font-size: 13px;
+            color: black;
+            background-color: white;
+        }
+
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            margin: 10px;
+            border: 1px solid #9bbb59;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 100%);
+            border: 1px solid #ccc;
+            padding: 8px;
+            z-index: 10;
+            font-weight: bold;
+            color: black;
+            text-align: center;
+            border-bottom: 2px solid #9bbb59;
+        }
+
+        td {
+            border: 1px solid #eee;
+            padding: 6px;
+            text-align: center;
+            color: black;
+            white-space: nowrap;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fcfdfa;
+        }
+
+        tr:hover {
+            background-color: #f1f8e9;
+            cursor: pointer;
+        }
+
+        tr.selected {
+            background-color: #2b78e4 !important;
+            color: white !important;
+        }
+
+            tr.selected td {
+                color: white !important;
+            }
+
+        tr.reviewed {
+            background-color: #ffd9d9 !important;
+            color: #900;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <button onclick="safeAction('add', newRow)" class="btn-new"><span>✚</span> جديد</button>
+        <button onclick="safeAction('add', save)" class="btn-save"><span>💾</span> حفظ</button>
+        <button onclick="safeAction('edit', editRow)"><span>✏️</span> تعديل</button>
+        <button onclick="loadList()"><span>🔍</span> عرض القائمة</button>
+        <button onclick="reviewClicked()"><span>🔎</span> مراجعة</button>
+        <button onclick="safeAction('delete', deleteRow)" class="btn-close"><span>🗑️</span> حذف</button>
+        <button onclick="safeAction('print', exportPdf)"><span>📄</span> PDF</button>
+        <button onclick="goHome()" class="btn-close"><span>✖</span> غلق</button>
+    </div>
+
+    <input type="hidden" id="id" />
+
+    <div class="section-container">
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>العهدة</label>
+                <select id="custodyName">
+                    <option value="0">-- اختر العهدة --</option>
+                    @foreach (var c in Model.Custodies)
+                    {
+                        <option value="@c.id">@c.custody</option>
+                    }
+                </select>
+            </div>
+            <div class="field-group">
+                <label>التاريخ</label>
+                <input type="date" id="custodyDate" value="@Model.CustodyDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="field-group">
+                <label>المبلغ</label>
+                <input type="number" id="amount" value="0" style="width:120px" />
+            </div>
+        </div>
+        <div class="row-inputs">
+            <div class="field-group" style="width:100%">
+                <label>ملاحظات</label>
+                <textarea id="notes" style="width:100%; height:50px"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table id="tbl">
+            <thead>
+                <tr>
+                    <th>مراجعة</th>
+                    <th>الملاحظات</th>
+                    <th>العهدة</th>
+                    <th>التاريخ</th>
+                    <th>المبلغ</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+
+    <script>
+        const PERMS = {
+            add: @canAdd.ToString().ToLower(),
+            edit: @canEdit.ToString().ToLower(),
+            delete: @canDelete.ToString().ToLower(),
+            review: @canReview.ToString().ToLower(),
+            print: @canPrint.ToString().ToLower()
+        };
+
+        let selectedId = 0;
+        let selectedRowElement = null;
+        let selectedRowData = null;
+
+        function loadList() {
+            const date = document.getElementById("custodyDate").value;
+            const custodyId = document.getElementById("custodyName").value || "";
+            if (!date) { alert("يجب تحديد التاريخ"); return; }
+
+            fetch(`/CustodyStage/GetList?date=${date}&custodyId=${custodyId}`)
+                .then(r => r.json())
+                .then(data => {
+                    const tb = document.querySelector("#tbl tbody");
+                    tb.innerHTML = "";
+                    let total = 0;
+                    data.forEach(x => {
+                        total += Number(x.balance) || 0;
+                        const tr = document.createElement("tr");
+                        if (x.isReviewed) tr.classList.add("reviewed");
+                        tr.onclick = () => selectRow(tr, x);
+                        tr.innerHTML = `
+                            <td><input type="checkbox" ${x.isReviewed ? "checked" : ""} disabled></td>
+                            <td>${x.notes || ""}</td>
+                            <td>${x.custody || ""}</td>
+                            <td>${x.date ? x.date.substring(0,10) : ""}</td>
+                            <td style="font-weight:bold">${x.balance}</td>
+                        `;
+                        tb.appendChild(tr);
+                    });
+                    const trT = document.createElement("tr");
+                    trT.style.fontWeight = "bold"; trT.style.background = "#f2f2f2";
+                    trT.innerHTML = `<td colspan="4">الإجمالي</td><td>${total.toFixed(2)}</td>`;
+                    tb.appendChild(trT);
+                });
+        }
+
+        function selectRow(tr, x) {
+            document.querySelectorAll("#tbl tbody tr").forEach(r => r.classList.remove("selected"));
+            tr.classList.add("selected");
+            selectedId = x.id; selectedRowElement = tr; selectedRowData = x;
+            document.getElementById("custodyName").value = x.custodyId;
+            document.getElementById("custodyDate").value = x.date.substring(0,10);
+            document.getElementById("amount").value = x.balance;
+            document.getElementById("notes").value = x.notes || "";
+        }
+
+        function save() {
+            if (selectedId) { alert("استخدم زر تعديل"); return; }
+            if (!PERMS.add) { alert("غير مسموح"); return; }
+            const c = document.getElementById("custodyName");
+            if (c.value == "0") { alert("اختر العهدة"); return; }
+            fetch('/CustodyStage/Save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    Id: 0,
+                    CustodyId: Number(c.value),
+                    Custody: c.options[c.selectedIndex].text,
+                    CustodyDate: document.getElementById("custodyDate").value,
+                    Balance: Number(document.getElementById("amount").value) || 0,
+                    Notes: document.getElementById("notes").value
+                })
+            }).then(() => { alert("تم الحفظ"); newRow(); loadList(); }).catch(err => alert(err));
+        }
+
+        function editRow() {
+            if (!selectedId) { alert("اختر صف"); return; }
+            if (!PERMS.edit) { alert("غير مسموح"); return; }
+            const c = document.getElementById("custodyName");
+            fetch('/CustodyStage/Save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    Id: selectedId,
+                    CustodyId: Number(c.value),
+                    Custody: c.options[c.selectedIndex].text,
+                    CustodyDate: document.getElementById("custodyDate").value,
+                    Balance: Number(document.getElementById("amount").value) || 0,
+                    Notes: document.getElementById("notes").value
+                })
+            }).then(() => { alert("تم التعديل"); newRow(); loadList(); }).catch(err => alert(err));
+        }
+
+        function deleteRow() {
+            if (!selectedId) return; if (!PERMS.delete) { alert("غير مسموح"); return; }
+            if (!confirm("تأكيد الحذف؟")) return;
+            fetch('/CustodyStage/Delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'id=' + selectedId
+            }).then(() => { newRow(); loadList(); });
+        }
+
+
+
+         const CAN_REVIEW = @PermissionViewHelper.CanReview(Context).ToString().ToLower();
+
+                function reviewClicked() {
+            if (!CAN_REVIEW) {
+                alert("ليس لديك صلاحية");
+                return;
+            }
+
+            if (!selectedId) return;
+
+            fetch(`/CustodyStage/ToggleReview?id=${selectedId}`, { method: "POST" })
+                .then(r => {
+                    if (!r.ok) throw "ليس لديك صلاحية";
+                    return r.json();
+                })
+                .then(res => {
+                    if (res.needConfirm) {
+                        if (!confirm("السجل مراجع، هل تريد إلغاء المراجعة؟")) return;
+
+                        fetch(`/CustodyStage/ToggleReview?id=${selectedId}&force=true`, { method: "POST" })
+                            .then(r => {
+                                if (!r.ok) throw "ليس لديك صلاحية";
+                                return r.json();
+                            })
+                            .then(f => applyUI(f.isReviewed))
+                            .catch(err => alert(err));
+                    } else {
+                        applyUI(res.isReviewed);
+                    }
+                })
+                .catch(err => alert(err));
+        }
+
+
+        function applyUI(isR) {
+            selectedRowData.isReviewed = isR;
+            selectedRowElement.querySelector("input").checked = isR;
+            if (isR) selectedRowElement.classList.add("reviewed"); else selectedRowElement.classList.remove("reviewed");
+        }
+
+        function newRow() {
+            selectedId = 0; document.getElementById("id").value = "";
+            document.getElementById("custodyName").value = "0";
+            document.getElementById("amount").value = 0;
+            document.getElementById("notes").value = "";
+            document.querySelectorAll(".selected").forEach(r => r.classList.remove("selected"));
+        }
+
+        function exportPdf() {
+            const doc = new jspdf.jsPDF({ orientation: "landscape" });
+            doc.text("عهدة مرحلة", 10, 10);
+            doc.autoTable({ html: "#tbl" });
+            doc.save("CustodyStage.pdf");
+        }
+
+        function goHome() { window.location.href = '/Home/Index'; }
+        function safeAction(a, fn) { if (!PERMS[a]) { alert("غير مسموح"); return; } fn(); }
+    </script>
+</body>
+</html>

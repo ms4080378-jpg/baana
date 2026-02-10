@@ -1,0 +1,54 @@
+﻿@model List<elbanna.Models.acc_ChequeRec>
+
+<table>
+    <thead>
+        <tr>
+            <th>تم الصرف</th>
+            <th>مراجع</th>
+            <th>الملاحظات</th>
+            <th>القيمة</th>
+            <th>الإيصال</th>
+            <th>البيان</th>
+            <th>إلى</th>
+            <th>الموقع</th>
+            <th>التاريخ</th>
+            <th>المستخدم</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var x in Model)
+        {
+            <tr class="data-row"
+                onclick="selectRow(this)"
+                data-id="@x.id"
+                data-paid="@(x.isPaid == true ? "true" : "false")"
+                data-reviewed="@(x.isReviewed == true ? "true" : "false")"
+                data-date="@x.processDate?.ToString("yyyy-MM-dd")"
+                data-costcenter="@x.costcenterId"
+                data-fromacc="@x.fromAcc"
+                data-toacc="@x.toAcc"
+                data-invoice="@x.invoiceCode"
+                data-notes="@x.notes"
+                data-total="@x.total"
+                data-dealerid="@x.dealerId"
+                data-bankid="@x.bankId"
+                data-chequeno="@x.chequeNo">
+
+                <td>
+                    <input type="checkbox" class="chk-paid" disabled @(x.isPaid == true ? "checked" : "") />
+                </td>
+                <td>
+                    <input type="checkbox" class="chk-reviewed" disabled @(x.isReviewed == true ? "checked" : "") />
+                </td>
+                <td>@x.notes</td>
+                <td style="font-weight:bold">@x.total?.ToString("N2")</td>
+                <td>@x.invoiceCode</td>
+                <td>@x.toAcc</td>
+                <td>@x.fromAcc</td>
+                <td>@x.costcenter</td>
+                <td>@x.processDate?.ToString("yyyy-MM-dd")</td>
+                <td>@x.insertUserId</td>
+            </tr>
+        }
+    </tbody>
+</table>

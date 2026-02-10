@@ -1,0 +1,226 @@
+﻿@model elbanna.Models.ViewModels.ProjectStatusPageVM
+@using elbanna.Helpers
+@{
+    bool canPrint = PermissionHelper.Can((int)Screens.ProjectStatus, "Print", Context);
+    ViewData["Title"] = "الموقف التنفيذي للمشروع";
+}
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>الموقف التنفيذي</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background-color: #e6f5d0;
+            color: black;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Toolbar */
+        .topbar {
+            background: #dff2c8;
+            border-bottom: 2px solid #9bbb59;
+            padding: 5px 10px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .topbar button {
+                background: linear-gradient(to bottom, #ffffff 0%, #f3f9eb 100%);
+                border: 1px solid #9bbb59;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 13px;
+                color: black;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                border-radius: 4px;
+                transition: 0.2s;
+            }
+
+                .topbar button:hover {
+                    background: #eaf7d9;
+                    border-color: #6aa84f;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .topbar button.btn-close {
+                    color: #cc0000;
+                }
+
+                .topbar button.btn-print {
+                    color: #1565c0;
+                }
+
+        /* Filter Section */
+        .section-container {
+            padding: 10px;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: #f4fbe9;
+            border: 1px dashed #9bbb59;
+            border-radius: 4px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: bold;
+            color: black;
+            min-width: 60px;
+        }
+
+        select {
+            border: 1px solid #9bbb59;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: Tahoma;
+            font-size: 13px;
+            color: black;
+            background-color: white;
+            width: 350px;
+        }
+
+        /* Table Grid Area */
+        .grid-area {
+            flex: 1;
+            overflow: auto;
+            margin: 10px;
+            border: 1px solid #9bbb59;
+            background: white;
+        }
+
+        table.status-grid {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1500px;
+        }
+
+            table.status-grid th {
+                position: sticky;
+                top: 0;
+                background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 100%);
+                border: 1px solid #ccc;
+                padding: 8px;
+                z-index: 10;
+                font-weight: bold;
+                color: black;
+                text-align: center;
+                border-bottom: 2px solid #9bbb59;
+            }
+
+            table.status-grid td {
+                border: 1px solid #eee;
+                padding: 6px;
+                text-align: center;
+                color: black;
+                white-space: nowrap;
+            }
+
+        .total {
+            background-color: #cfe2f3 !important;
+            font-weight: bold;
+        }
+
+        .required {
+            background-color: #d9ead3 !important;
+            font-weight: bold;
+        }
+
+        .empty-msg {
+            padding: 50px;
+            text-align: center;
+            color: #666;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <button type="button" class="btn-print" onclick="loadPdf()"><span>📊</span> عرض للطباعة (PDF)</button>
+        <button type="button" onclick="window.print()"><span>🖨️</span> طباعة الصفحة</button>
+        <button type="button" class="btn-close" onclick="location.href='/'"><span>❌</span> غلق</button>
+    </div>
+
+    <div class="section-container">
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>الموقع</label>
+                <select name="CostCenterId" id="CostCenterId">
+                    <option value="">-- اختر الموقع لعرض الموقف التنفيذي --</option>
+                    @foreach (var c in ViewBag.CostCenters)
+                    {
+                        <option value="@c.id">@c.costCenter</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div id="tableArea" class="grid-area">
+        <table class="status-grid">
+            <thead>
+                <tr>
+                    <th>رقم العمارة</th>
+                    <th>المرحلة</th>
+                    <th>المقاول</th>
+                    <th colspan="11">الأدوار والبنود</th>
+                    <th class="total">الإجمالي</th>
+                    <th class="required">المطلوب</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="16" class="empty-msg">اختر الموقع من الأعلى لعرض البيانات</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script>
+        const CAN_PRINT = @canPrint.ToString().ToLower();
+
+        $('#CostCenterId').on('change', function () {
+            const val = this.value;
+            if (!val) return;
+            $.post('/ProjectStatus/Load', { CostCenterId: val, mode: 'table' }, function (html) {
+                $('#tableArea').html(html);
+            });
+        });
+
+        function loadPdf() {
+            if (!CAN_PRINT) { alert('غير مسموح لك بالطباعة'); return; }
+            const ddl = document.getElementById('CostCenterId');
+            if (!ddl.value) { alert('اختر الموقع أولاً'); return; }
+            $.post('/ProjectStatus/Load', { CostCenterId: ddl.value, mode: 'pdf' }, function (html) {
+                $('#tableArea').html(html);
+            });
+        }
+
+        function backToTable() {
+            $('#CostCenterId').trigger('change');
+        }
+    </script>
+</body>
+</html>

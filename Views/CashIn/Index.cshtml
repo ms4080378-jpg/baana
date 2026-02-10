@@ -1,0 +1,371 @@
+@using elbanna.Helpers
+@{
+    int SCREEN_ID = (int)Screens.CashIn;
+    bool canAdd = PermissionViewHelper.CanAdd(Context, SCREEN_ID);
+    bool canEdit = PermissionViewHelper.CanEdit(Context, SCREEN_ID);
+    bool canDelete = PermissionViewHelper.CanDelete(Context, SCREEN_ID);
+    bool canPrint = PermissionViewHelper.CanPrint(Context, SCREEN_ID);
+    bool canReview = PermissionViewHelper.CanReview(Context) && canEdit;
+    Layout = null;
+    var today = DateTime.Today.ToString("yyyy-MM-dd");
+}
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>وارد نقدية</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background-color: #e6f5d0;
+            color: black;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .topbar {
+            background: #dff2c8;
+            border-bottom: 2px solid #9bbb59;
+            padding: 5px 10px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .topbar button {
+                background: linear-gradient(to bottom, #ffffff 0%, #f3f9eb 100%);
+                border: 1px solid #9bbb59;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 13px;
+                color: black;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                border-radius: 4px;
+                transition: 0.2s;
+            }
+
+                .topbar button:hover {
+                    background: #eaf7d9;
+                    border-color: #6aa84f;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .topbar button.btn-close {
+                    color: #cc0000;
+                }
+
+                .topbar button.btn-save {
+                    color: #2e7d32;
+                }
+
+                .topbar button.btn-new {
+                    color: #1565c0;
+                }
+
+        .section-container {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: #f4fbe9;
+            border: 1px dashed #9bbb59;
+            border-radius: 4px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: bold;
+            color: black;
+            min-width: 60px;
+        }
+
+        input, select {
+            border: 1px solid #9bbb59;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: Tahoma;
+            font-size: 13px;
+            color: black;
+            background-color: white;
+        }
+
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            margin: 10px;
+            border: 1px solid #9bbb59;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 100%);
+            border: 1px solid #ccc;
+            padding: 8px;
+            z-index: 10;
+            font-weight: bold;
+            color: black;
+            text-align: center;
+            border-bottom: 2px solid #9bbb59;
+        }
+
+        td {
+            border: 1px solid #eee;
+            padding: 6px;
+            text-align: center;
+            color: black;
+            white-space: nowrap;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fcfdfa;
+        }
+
+        tr:hover {
+            background-color: #f1f8e9;
+            cursor: pointer;
+        }
+
+        tr.selected {
+            background-color: #2b78e4 !important;
+            color: white !important;
+        }
+
+            tr.selected td {
+                color: white !important;
+            }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <button type="button" onclick="safeAction('add', newRow)" class="btn-new"><span>✚</span> جديد</button>
+        <button type="button" onclick="safeAction('add', saveCashIn)" class="btn-save"><span>💾</span> حفظ</button>
+        <button type="button" onclick="safeAction('edit', edit)"><span>✏️</span> تعديل</button>
+        <button type="button" onclick="loadList()"><span>🔍</span> عرض القائمة</button>
+        <button type="button" onclick="reviewClicked()"><span>🔎</span> مراجعة</button>
+        <button type="button" onclick="safeAction('delete', removeRow)" class="btn-close"><span>🗑️</span> حذف</button>
+        <button type="button" onclick="safeAction('print', exportExcel)"><span>📊</span> Excel</button>
+        <button type="button" onclick="goHome()" class="btn-close"><span>✖</span> غلق</button>
+    </div>
+
+    <div class="section-container">
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>الموقع</label>
+                <select id="costCenterId">
+                    <option value="">الكل</option>
+                    @foreach (var c in ViewBag.CostCenters)
+                    {
+                        <option value="@c.id">@c.costCenter</option>
+                    }
+                </select>
+            </div>
+            <div class="field-group">
+                <label>الاسم</label>
+                <select id="dealerId">
+                    <option value="">اختر</option>
+                    @foreach (var name in ViewBag.Names)
+                    {
+                        <option value="@name">@name</option>
+                    }
+                </select>
+            </div>
+            <div class="field-group">
+                <label>التاريخ</label>
+                <input type="date" id="date" value="@today" />
+            </div>
+        </div>
+        <div class="row-inputs">
+            <div class="field-group">
+                <label>المبلغ</label>
+                <input type="number" id="balance" value="0" style="width:120px" />
+            </div>
+            <div class="field-group">
+                <label>ملاحظات</label>
+                <input type="text" id="notes" style="width:500px" />
+            </div>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>الاسم</th>
+                    <th>المبلغ</th>
+                    <th>التاريخ</th>
+                    <th>الملاحظات</th>
+                    <th>المستخدم</th>
+                    <th>الموقع</th>
+                    <th>مراجعة</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+        const PERMS = {
+            add: @canAdd.ToString().ToLower(),
+            edit: @canEdit.ToString().ToLower(),
+            delete: @canDelete.ToString().ToLower(),
+            review: @canReview.ToString().ToLower(),
+            print: @canPrint.ToString().ToLower()
+        };
+
+        let selectedId = 0;
+        let selectedRow = null;
+
+        function loadList() {
+            const dateVal = document.getElementById('date').value;
+            const cc = document.getElementById('costCenterId').value || 0;
+            const tbody = document.querySelector('#dataTable tbody');
+            tbody.innerHTML = "<tr><td colspan='7'>جاري التحميل...</td></tr>";
+
+            fetch(`/CashIn/List?date=${dateVal}&costCenterId=${cc}`)
+                .then(res => res.json())
+                .then(data => {
+                    tbody.innerHTML = '';
+                    let sum = 0;
+                    data.forEach(x => {
+                        sum += Number(x.balance || 0);
+                        const tr = document.createElement('tr');
+                        tr.onclick = () => selectRow(tr, x);
+                        tr.dataset.reviewed = x.reviewed ? "1" : "0";
+                        if (x.reviewed) tr.style.background = '#fa8072';
+                        tr.innerHTML = `
+                            <td>${x.custody ?? ""}</td>
+                            <td style="font-weight:bold">${Number(x.balance || 0).toFixed(2)}</td>
+                            <td>${x.date ? x.date.substring(0, 10) : ""}</td>
+                            <td>${x.notes ?? ""}</td>
+                            <td>${x.userName ?? ""}</td>
+                            <td>${x.siteName ?? ""}</td>
+                            <td><input type="checkbox" disabled ${x.reviewed ? 'checked' : ''}></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                    const trT = document.createElement('tr');
+                    trT.style.fontWeight = "bold"; trT.style.background = "#f2f2f2";
+                    trT.innerHTML = `<td>الإجمالي</td><td>${sum.toFixed(2)}</td><td colspan="5"></td>`;
+                    tbody.appendChild(trT);
+                });
+        }
+
+        function selectRow(tr, x) {
+            document.querySelectorAll('#dataTable tbody tr').forEach(r => r.classList.remove('selected'));
+            tr.classList.add('selected');
+            selectedId = x.id; selectedRow = tr;
+            document.getElementById("dealerId").value = x.custody ?? "";
+            document.getElementById("balance").value = x.balance ?? 0;
+            document.getElementById("notes").value = x.notes ?? "";
+            document.getElementById("date").value = x.date ? x.date.substring(0, 10) : "";
+            document.getElementById("costCenterId").value = x.siteId ?? "";
+        }
+
+        function saveCashIn() {
+            if (selectedId) { alert("استخدم زر تعديل"); return; }
+            if (!PERMS.add) { alert("غير مسموح"); return; }
+            sendSave(0);
+        }
+        function edit() { if (!selectedId) return; if (!PERMS.edit) { alert("غير مسموح"); return; } sendSave(selectedId); }
+
+        function sendSave(id) {
+            const d = document.getElementById("dealerId");
+            const c = document.getElementById("costCenterId");
+            const model = {
+                id: id,
+                custody: d.selectedIndex > 0 ? d.options[d.selectedIndex].text : "",
+                date: document.getElementById("date").value,
+                balance: parseFloat(document.getElementById("balance").value || 0),
+                notes: document.getElementById("notes").value,
+                costCenterId: parseInt(c.value || 0)
+            };
+            if (!model.date || !model.custody || !model.costCenterId) { alert("أكمل البيانات"); return; }
+            fetch('/CashIn/Save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(model) })
+                .then(() => { alert("تم بنجاح"); loadList(); newRow(); });
+        }
+
+        function removeRow() {
+            if (!selectedId) return; if (!PERMS.delete) { alert("غير مسموح"); return; }
+            if (!confirm('حذف؟')) return;
+            fetch(`/CashIn/Delete?id=${selectedId}`, { method: 'POST' }).then(() => { newRow(); loadList(); });
+        }
+
+
+
+        const CAN_REVIEW = @PermissionViewHelper.CanReview(Context).ToString().ToLower();
+
+                function reviewClicked() {
+            if (!CAN_REVIEW) {
+                alert("ليس لديك صلاحية");
+                return;
+            }
+
+            if (!selectedId) return;
+
+            const isR = selectedRow.dataset.reviewed === "1";
+            if (!confirm(isR ? "إلغاء مراجعة؟" : "مراجعة؟")) return;
+
+            fetch("/CashIn/ToggleReview", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: selectedId, review: !isR })
+            })
+            .then(r => {
+                if (!r.ok) throw "ليس لديك صلاحية";
+                return r.text();
+            })
+            .then(() => loadList())
+            .catch(err => alert(err));
+        }
+
+
+        function newRow() {
+            selectedId = 0; selectedRow = null;
+            document.getElementById("dealerId").value = "";
+            document.getElementById("balance").value = 0;
+            document.getElementById("notes").value = "";
+            document.querySelectorAll('.selected').forEach(r => r.classList.remove('selected'));
+        }
+
+        function exportExcel() {
+            const table = document.getElementById("dataTable");
+            const wb = XLSX.utils.table_to_book(table);
+            XLSX.writeFile(wb, "CashIn.xlsx");
+        }
+        function goHome() { window.location.href = "/"; }
+        function safeAction(a, fn) { if (!PERMS[a]) { alert("غير مسموح"); return; } fn(); }
+    </script>
+</body>
+</html>

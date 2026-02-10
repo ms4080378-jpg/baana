@@ -1,0 +1,432 @@
+@using elbanna.Helpers
+@{
+    int SCREEN_ID = (int)Screens.PayInvoice;
+    bool canAdd = PermissionViewHelper.CanAdd(Context, SCREEN_ID);
+    bool canEdit = PermissionViewHelper.CanEdit(Context, SCREEN_ID);
+    bool canDelete = PermissionViewHelper.CanDelete(Context, SCREEN_ID);
+    bool canReview = PermissionViewHelper.CanReview(Context);
+    bool canPrint = PermissionViewHelper.CanPrint(Context, SCREEN_ID);
+    Layout = "_Layout";
+}
+@model elbanna.Models.ViewModels.PayInvoiceVM
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>متحصلات المستخلصات</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background-color: #e6f5d0;
+            color: black;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Toolbar */
+        .topbar {
+            background: #dff2c8;
+            border-bottom: 2px solid #9bbb59;
+            padding: 5px 10px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .topbar button {
+                background: linear-gradient(to bottom, #ffffff 0%, #f3f9eb 100%);
+                border: 1px solid #9bbb59;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 13px;
+                color: black;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                border-radius: 4px;
+                transition: 0.2s;
+            }
+
+                .topbar button:hover {
+                    background: #eaf7d9;
+                    border-color: #6aa84f;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .topbar button:active {
+                    transform: translateY(1px);
+                }
+
+                .topbar button.btn-close {
+                    color: #cc0000;
+                }
+
+                .topbar button.btn-save {
+                    color: #2e7d32;
+                }
+
+                .topbar button.btn-new {
+                    color: #1565c0;
+                }
+
+        /* Entry & Filter Section */
+        .section-container {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 8px;
+            background: #f4fbe9;
+            border: 1px dashed #9bbb59;
+            border-radius: 4px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: bold;
+            color: black;
+            min-width: 100px;
+            font-size: 12px;
+        }
+
+        input, select, textarea {
+            border: 1px solid #9bbb59;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: Tahoma;
+            font-size: 12px;
+            color: black;
+            background-color: white;
+            height: 26px;
+        }
+
+            input:focus, select:focus, textarea:focus {
+                outline: none;
+                border-color: #4a6125;
+                box-shadow: 0 0 4px rgba(155, 187, 89, 0.3);
+            }
+
+            input[readonly] {
+                background-color: #f9f9f9;
+                font-weight: bold;
+            }
+
+        textarea {
+            height: 50px;
+            resize: none;
+        }
+
+        /* Table Grid */
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            margin: 10px;
+            border: 1px solid #9bbb59;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 100%);
+            border: 1px solid #ccc;
+            padding: 8px;
+            z-index: 10;
+            font-weight: bold;
+            color: black;
+            text-align: center;
+            border-bottom: 2px solid #9bbb59;
+        }
+
+        td {
+            border: 1px solid #eee;
+            padding: 6px;
+            text-align: center;
+            color: black;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fcfdfa;
+        }
+
+        tr:hover {
+            background-color: #f1f8e9;
+        }
+
+        tr.selected {
+            background-color: #2b78e4 !important;
+            color: white !important;
+        }
+
+            tr.selected td {
+                color: white !important;
+            }
+
+        tr.reviewed {
+            background-color: #1e3a8a !important;
+            color: white !important;
+        }
+
+            tr.reviewed td {
+                color: white !important;
+            }
+
+        tr.paid {
+            background-color: #1b5e20 !important;
+            color: white !important;
+        }
+
+            tr.paid td {
+                color: white !important;
+            }
+    </style>
+</head>
+<body>
+
+    <script>
+        const PERMS = {
+            add: @canAdd.ToString().ToLower(),
+            edit: @canEdit.ToString().ToLower(),
+            delete: @canDelete.ToString().ToLower(),
+            review: @canReview.ToString().ToLower(),
+            paid: @canReview.ToString().ToLower(),
+            print: @canPrint.ToString().ToLower()
+        };
+        const CAN_REVIEW = @((canReview) ? "true" : "false");
+    </script>
+
+    <div class="topbar">
+        <button onclick="newRow()" class="btn-new"><span>📄</span> جديد</button>
+        <button onclick="saveClick()" class="btn-save"><span>💾</span> حفظ</button>
+        <button onclick="deleteRowClick()" class="btn-close"><span>🗑️</span> حذف</button>
+        <button onclick="editRow()"><span>✏️</span> تعديل</button>
+        <button onclick="showList()"><span>📋</span> عرض القائمة</button>
+        <button onclick="safeAction('print', exportExcel)"><span>📊</span> Excel</button>
+        <button onclick="reviewClicked()"><span>🔎</span> مراجعة</button>
+        <button onclick="paidClicked()"><span>💰</span> تم الصرف</button>
+        <button onclick="location.href='/'" class="btn-close"><span>❌</span> غلق</button>
+    </div>
+
+    <div class="section-container">
+        <input type="hidden" id="Id" />
+        <div class="row-inputs">
+            <div class="field-group"><label>التاريخ</label><input type="date" id="Date" value="@Model.Date.ToString("yyyy-MM-dd")" /></div>
+            <div class="field-group">
+                <label>الموقع</label>
+                <select id="CostCenterId" onchange="loadInvoices()" style="width: 200px;">
+                    <option value="0">الكل</option>
+                    @foreach (var c in Model.CostCenters)
+                    {
+                        <option value="@c.id">@c.costCenter</option>
+                    }
+                </select>
+            </div>
+            <div class="field-group"><label>رقم المستخلص</label><select id="InvoiceCode" onchange="calcInvoice()" style="width: 150px;"></select></div>
+        </div>
+
+        <div class="row-inputs">
+            <div class="field-group"><label>إجمالي الأعمال</label><input type="number" id="Total" readonly /></div>
+            <div class="field-group"><label>الاستقطاعات</label><input type="number" id="Debit" readonly /></div>
+            <div class="field-group"><label>الصافي</label><input type="number" id="Net" readonly style="font-weight: bold;" /></div>
+        </div>
+
+        <div class="row-inputs">
+            <div class="field-group"><label>مدفوع سابقًا</label><input type="number" id="Paid" readonly /></div>
+            <div class="field-group"><label>المبلغ</label><input type="number" id="Amount" value="0" oninput="calcRemain()" /></div>
+            <div class="field-group"><label>الباقي</label><input type="number" id="Remain" readonly style="font-weight: bold;" /></div>
+        </div>
+
+        <div class="row-inputs">
+            <div class="field-group" style="width: 100%;"><label>ملاحظات</label><textarea id="Notes" style="width: 600px;"></textarea></div>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table id="tbl">
+            <thead>
+                <tr>
+                    <th>رقم المستخلص</th>
+                    <th>التاريخ</th>
+                    <th>الموقع</th>
+                    <th>المبلغ</th>
+                    <th>ملاحظات</th>
+                    <th>المستخدم</th>
+                    <th>مراجع</th>
+                    <th>تم الصرف</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        let selectedId = 0;
+
+        function safeAction(action, fn) { if (!PERMS[action]) return alert("غير مسموح لك"); fn(); }
+        function saveClick() { const id = +($("#Id").val() || 0); safeAction(id === 0 ? "add" : "edit", save); }
+        function deleteRowClick() { safeAction("delete", deleteRow); }
+        function editRow() { if (!selectedId) return alert("اختر صف أولاً"); safeAction("edit", save); }
+
+        function showList() {
+            $.post("/PayInvoice/ShowList", { date: $("#Date").val(), costCenterId: $("#CostCenterId").val() || 0 }, function(res) {
+                if (!res.ok) return alert(res.message);
+                const tbody = $("#tbl tbody"); tbody.empty();
+                res.data.forEach(x => {
+                    const tr = $(`<tr data-id="${x.id}" data-date="${x.date?.substring(0,10)}" data-costcenterid="${x.costcenterId}" data-invoicecode="${x.invoiceCode}" data-amount="${x.paid}" data-notes="${x.notes}"><td>${x.invoiceCode}</td><td>${x.date?.substring(0,10)}</td><td>${x.costcenter}</td><td style="font-weight:bold">${x.paid}</td><td>${x.notes}</td><td>${x.insertUserId}</td><td><input type="checkbox" disabled ${x.isReviewed?"checked":""}></td><td><input type="checkbox" disabled ${x.isPaid?"checked":""}></td></tr>`);
+                    if (x.isReviewed) tr.addClass("reviewed"); if (x.isPaid) tr.addClass("paid");
+                    tr.click(function() { selectRow(this); }); tbody.append(tr);
+                });
+            });
+        }
+
+        function selectRow(tr) {
+            $("#tbl tbody tr").removeClass("selected"); $(tr).addClass("selected");
+            const d = tr.dataset; selectedId = d.id; $("#Id").val(d.id); $("#Date").val(d.date); $("#CostCenterId").val(d.costcenterid);
+            loadInvoices(); setTimeout(() => { $("#InvoiceCode").val(d.invoicecode); calcInvoice(); }, 200);
+            $("#Amount").val(d.amount); $("#Notes").val(d.notes);
+        }
+
+        function save() {
+            if (!$("#CostCenterId").val() || !$("#InvoiceCode").val() || Number($("#Amount").val()) <= 0) return alert("أكمل البيانات بشكل صحيح");
+            $.post("/PayInvoice/Save", { Id: $("#Id").val(), Date: $("#Date").val(), CostCenterId: $("#CostCenterId").val(), CostCenterName: $("#CostCenterId option:selected").text(), InvoiceCode: $("#InvoiceCode").val(), Amount: $("#Amount").val(), Notes: $("#Notes").val() })
+            .then(() => { alert("تم الحفظ"); clearForm(); showList(); });
+        }
+
+        function newRow() { selectedId = 0; $("#Id").val(""); $("#InvoiceCode").val(""); $("#Amount").val(0); $("#Notes").val(""); $("#Total,#Debit,#Paid,#Net,#Remain").val(0); $("#tbl tr").removeClass("selected"); }
+        function deleteRow() { if (!selectedId) return alert("اختر صف"); if (confirm("حذف؟")) $.post("/PayInvoice/Delete", { id: selectedId }, () => { alert("تم"); newRow(); showList(); }); }
+        function loadInvoices() { $("#InvoiceCode").empty(); $.post("/PayInvoice/LoadInvoices", { costCenterId: $("#CostCenterId").val() }, list => { list.forEach(x => $("#InvoiceCode").append(`<option value="${x}">${x}</option>`)); }); }
+        function calcInvoice() { $.post("/PayInvoice/CalcInvoice", { costCenterId: $("#CostCenterId").val(), invoiceCode: $("#InvoiceCode").val(), currentId: selectedId }, r => { $("#Total").val(r.total); $("#Debit").val(r.debit); $("#Net").val(r.net); $("#Paid").val(r.paid); calcRemain(); }); }
+        function calcRemain() { $("#Remain").val((+$("#Net").val()) - (+$("#Paid").val()) - (+$("#Amount").val())); }
+
+
+
+        // const CAN_REVIEW = @((canReview) ? "true" : "false");
+
+               function reviewClicked(){
+            if (!CAN_REVIEW) {
+                alert("ليس لديك صلاحية");
+                return;
+            }
+            toggleReview();
+        }
+
+        function paidClicked(){
+            if (!CAN_REVIEW) {
+                alert("ليس لديك صلاحية");
+                return;
+            }
+            togglePaid();
+        }
+
+
+                  function toggleReview() {
+
+            if (!CAN_REVIEW) {
+                alert("ليس لديك صلاحية");
+                return;
+            }
+
+            if (!selectedId) {
+                alert("اختر صف أولًا");
+                return;
+            }
+
+            const tr = document.querySelector("#tbl tbody tr.selected");
+            if (!tr) {
+                alert("اختر صف صحيح");
+                return;
+            }
+
+            const isReviewed = tr.classList.contains("reviewed");
+
+            let msg = isReviewed
+                ? "الصف مراجع بالفعل، هل تريد إلغاء المراجعة؟"
+                : "هل تريد مراجعة هذا الصف؟";
+
+            if (!confirm(msg)) return;
+
+            $.post("/PayInvoice/ToggleReview", { id: selectedId })
+                .done(function () {
+                    tr.classList.toggle("reviewed");
+
+                    const chk = tr.querySelector("td:nth-last-child(2) input[type=checkbox]");
+                    if (chk) chk.checked = tr.classList.contains("reviewed");
+                })
+                .fail(function (xhr) {
+                    alert(xhr.responseText || "ليس لديك صلاحية");
+                });
+        }
+
+
+
+                    function togglePaid() {
+
+            if (!CAN_REVIEW) {
+                alert("ليس لديك صلاحية");
+                return;
+            }
+
+            if (!selectedId) {
+                alert("اختر صف أولًا");
+                return;
+            }
+
+            const tr = document.querySelector("#tbl tbody tr.selected");
+            if (!tr) {
+                alert("اختر صف صحيح");
+                return;
+            }
+
+            const isPaid = tr.classList.contains("paid");
+
+            let msg = isPaid
+                ? "الصف مصروف بالفعل، هل تريد إلغاء الصرف؟"
+                : "هل تريد صرف هذا الصف؟";
+
+            if (!confirm(msg)) return;
+
+            $.post("/PayInvoice/TogglePaid", { id: selectedId })
+                .done(function () {
+                    tr.classList.toggle("paid");
+
+                    const chk = tr.querySelector("td:last-child input[type=checkbox]");
+                    if (chk) chk.checked = tr.classList.contains("paid");
+                })
+                .fail(function (xhr) {
+                    alert(xhr.responseText || "ليس لديك صلاحية");
+                });
+        }
+
+
+        function clearForm() { $("#Id").val(0); $("#InvoiceCode").val(""); $("#Amount").val(0); $("#Notes").val(""); }
+        function exportExcel() { /* Logic */ }
+    </script>
+</body>
+</html>

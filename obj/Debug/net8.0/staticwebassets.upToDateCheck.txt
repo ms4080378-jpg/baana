@@ -1,0 +1,3 @@
+wwwroot\assets\main.css
+wwwroot\css\dashboard.css
+wwwroot\images\company-logo.png

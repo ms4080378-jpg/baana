@@ -1,0 +1,489 @@
+@model elbanna.ViewModels.InvoiceIndexVM
+@{
+    Layout = null;
+}
+@using elbanna.Helpers
+@{
+    int SCREEN_ID = (int)Screens.Invoice;
+    bool canReview = PermissionViewHelper.CanReview(Context);
+}
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>المستخلصات</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background-color: #e6f5d0;
+            color: black;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Toolbar */
+        .topbar {
+            background: #dff2c8;
+            border-bottom: 2px solid #9bbb59;
+            padding: 5px 10px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .topbar button {
+                background: linear-gradient(to bottom, #ffffff 0%, #f3f9eb 100%);
+                border: 1px solid #9bbb59;
+                padding: 4px 12px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 13px;
+                color: black;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                border-radius: 4px;
+                transition: 0.2s;
+            }
+
+                .topbar button:hover {
+                    background: #eaf7d9;
+                    border-color: #6aa84f;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .topbar button:active {
+                    transform: translateY(1px);
+                }
+
+                .topbar button.btn-close {
+                    color: #cc0000;
+                }
+
+                .topbar button.btn-save {
+                    color: #2e7d32;
+                }
+
+                .topbar button.btn-new {
+                    color: #1565c0;
+                }
+
+        /* Filter & Entry Section */
+        .section-container {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: #f4fbe9;
+            border: 1px dashed #9bbb59;
+            border-radius: 4px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: bold;
+            color: black;
+            min-width: 60px;
+        }
+
+        input, select {
+            border: 1px solid #9bbb59;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: Tahoma;
+            font-size: 13px;
+            color: black;
+            background-color: white;
+        }
+
+            input:focus, select:focus {
+                outline: none;
+                border-color: #4a6125;
+                box-shadow: 0 0 4px rgba(155, 187, 89, 0.3);
+            }
+
+        /* Table Grid */
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            margin: 10px;
+            border: 1px solid #9bbb59;
+            background: white;
+            display: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 100%);
+            border: 1px solid #ccc;
+            padding: 8px;
+            z-index: 10;
+            font-weight: bold;
+            color: black;
+            text-align: center;
+            border-bottom: 2px solid #9bbb59;
+        }
+
+        td {
+            border: 1px solid #eee;
+            padding: 6px;
+            text-align: center;
+            color: black;
+            white-space: nowrap;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fcfdfa;
+        }
+
+        tr:hover {
+            background-color: #f1f8e9;
+            cursor: pointer;
+        }
+
+        tr.selected-row {
+            background-color: #2b78e4 !important;
+            color: white !important;
+        }
+
+            tr.selected-row td {
+                color: white !important;
+            }
+
+        tr.reviewed {
+            background-color: #dff2c8 !important;
+        }
+
+        tr.refund-row {
+            background-color: #fff5f5 !important;
+        }
+
+        .search-input {
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .msg {
+            margin: 5px 10px;
+            padding: 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+            .msg.err {
+                background: #ffecec;
+                border: 1px solid #e0b0b0;
+                color: #a00;
+            }
+
+            .msg.ok {
+                background: #f0fff0;
+                border: 1px solid #b0e0b0;
+                color: #006600;
+            }
+    </style>
+</head>
+<body>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="msg err">@TempData["ErrorMessage"]</div>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="msg ok">@TempData["SuccessMessage"]</div>
+    }
+
+    <div class="topbar">
+        <button type="button" onclick="safeAction('add', newInvoice)" class="btn-new"><span>📄</span> جديد</button>
+        <button type="button" onclick="safeAction('add', saveInvoice)" class="btn-save"><span>💾</span> حفظ</button>
+        <button type="button" onclick="safeAction('edit', editInvoice)"><span>✏️</span> تعديل</button>
+        <button type="button" onclick="reviewClicked()"><span>🔍</span> مراجعة</button>
+        <button type="button" onclick="showList()"><span>📋</span> عرض القائمة</button>
+        <button type="button" onclick="safeAction('delete', deleteInvoice)" class="btn-close"><span>🗑️</span> حذف</button>
+        <button type="button" onclick="safeAction('print', exportExcel)"><span>📊</span> Excel</button>
+        <button type="button" onclick="location.href='/Home/Index'" class="btn-close"><span>❌</span> غلق</button>
+    </div>
+
+    <form id="invoiceForm" method="post" asp-action="SaveInvoice" asp-controller="Invoice">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Invoice.id" id="Invoice_id" />
+        <input type="hidden" name="showList" id="showListHidden" value="true" />
+
+        <div class="section-container">
+            <div class="row-inputs">
+                <div class="field-group">
+                    <label>الموقع</label>
+                    <select asp-for="Invoice.costcenterId" id="costcenter" style="width: 250px;" onchange="costcenterChanged()">
+                        <option value="" disabled selected>-- اختر الموقع --</option>
+                        @foreach (var c in Model.CostCenters)
+                        {
+                            <option value="@c.id">@c.costCenter</option>
+                        }
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>التاريخ</label>
+                    <input type="date" asp-for="Invoice.date" id="invDate" />
+                </div>
+                <div class="field-group">
+                    <label>رقم المستخلص</label>
+                    <input asp-for="Invoice.invoiceCode" id="invoiceCode" list="invoiceCodesList" style="width: 200px;" placeholder="رقم المستخلص..." oninput="invoiceCodeInput()" onchange="refreshInvoiceSummary()" />
+                    <datalist id="invoiceCodesList"></datalist>
+                </div>
+            </div>
+
+            <div class="row-inputs">
+                <div class="field-group">
+                    <label>نوع المستخلص</label>
+                    <select asp-for="Invoice.invoiceType" id="invoiceType">
+                        <option value="">-- اختر --</option>
+                        <option value="نوع 1">نوع 1</option>
+                        <option value="نوع 2">نوع 2</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>البيان</label>
+                    <select asp-for="Invoice.payForId" id="payFor" onchange="payForChanged()" style="width: 200px;">
+                        <option value="">-- اختر --</option>
+                        @foreach (var p in Model.PayFors)
+                        {
+                            <option value="@p.id" data-factor="@p.factor" data-value="@p.factorValue">@p.payFor</option>
+                        }
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>إجمالي الأعمال</label>
+                    <input asp-for="Invoice.balance" id="total" onkeyup="calcNet()" style="width: 100px;" />
+                </div>
+                <div class="field-group">
+                    <label>المعامل</label>
+                    <input asp-for="Invoice.factor" id="factor" readonly style="width: 50px; text-align: center;" />
+                </div>
+                <div class="field-group">
+                    <label>قيمة</label>
+                    <input asp-for="Invoice.factorValue" id="factorValue" onkeyup="calcNet()" style="width: 80px;" />
+                </div>
+                <div class="field-group">
+                    <label>الصافي</label>
+                    <input asp-for="Invoice.net" id="net" readonly style="width: 100px; font-weight: bold;" />
+                </div>
+                <div class="field-group">
+                    <label style="min-width: auto; cursor: pointer;"><input type="checkbox" id="isRefundTrue" name="Invoice.isRefund" value="true" @(Model.Invoice.isRefund == true ? "checked" : "") /> ترد</label>
+                    <input type="hidden" name="Invoice.isRefund" value="false" />
+                </div>
+            </div>
+
+            <div class="row-inputs" style="background: #eef6dd; border: 1px solid #9bbb59;">
+                <div class="field-group"><label style="min-width: 250px;" id="lblTotalDeduction">إجمالى قيمة الاستقطاعات: -</label></div>
+                <div class="field-group"><label style="min-width: 200px;" id="lblRemains">المتبقي: -</label></div>
+            </div>
+        </div>
+    </form>
+
+    <div id="listWrapper" class="table-wrapper" style="display:@(Model.ShowList ? "block" : "none")">
+        <table id="invTable">
+            <thead>
+                <tr>
+                    <th>رقم المستخلص</th>
+                    <th>البيان</th>
+                    <th>ترد</th>
+                    <th>قيمة المعامل</th>
+                    <th>إجمالي قيمة الأعمال</th>
+                    <th>التاريخ</th>
+                    <th>معامل</th>
+                    <th>المستخدم</th>
+                    <th>الموقع</th>
+                    <th>مراجع</th>
+                </tr>
+                <tr class="search-row">
+                    <th><input type="text" class="search-input" data-col="0" /></th>
+                    <th><input type="text" class="search-input" data-col="1" /></th>
+                    <th></th>
+                    <th><input type="text" class="search-input" data-col="3" /></th>
+                    <th><input type="text" class="search-input" data-col="4" /></th>
+                    <th><input type="date" class="search-input" data-col="5" /></th>
+                    <th><input type="text" class="search-input" data-col="6" /></th>
+                    <th><input type="text" class="search-input" data-col="7" /></th>
+                    <th><input type="text" class="search-input" data-col="8" /></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var x in Model.List)
+                {
+                    <tr onclick="selectRow(this)" data-id="@x.id" data-invoicecode="@x.invoiceCode" data-invoicetype="@x.invoiceType" data-payforid="@x.payForId" data-factor="@x.factor" data-factorvalue="@x.factorValue" data-balance="@x.balance" data-net="@x.net" data-date="@x.date?.ToString("yyyy-MM-dd")" data-costcenterid="@x.costcenterId" data-isrefund="@(x.isRefund == true ? "true" : "false")" data-reviewed="@(x.isReviewed == true ? "true" : "false")" class="@(x.isReviewed == true ? "reviewed" : "") @(x.isRefund == true ? "refund-row" : "")">
+                        <td>@x.invoiceCode</td>
+                        <td>@x.payFor</td>
+                        <td><input type="checkbox" disabled @(x.isRefund == true ? "checked" : "") /></td>
+                        <td>@x.factorValue</td>
+                        <td>@x.balance</td>
+                        <td>@x.date?.ToString("yyyy-MM-dd")</td>
+                        <td>@x.factor</td>
+                        <td>@x.lastUpdateUserId</td>
+                        <td>@x.costcenter</td>
+                        <td><input type="checkbox" class="cell-check" disabled @(x.isReviewed == true ? "checked" : "") /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const PERMS = { add: @PermissionHelper.Can((int)Screens.Invoice, "Add", Context).ToString().ToLower(), edit: @PermissionHelper.Can((int)Screens.Invoice, "Edit", Context).ToString().ToLower(), delete: @PermissionHelper.Can((int)Screens.Invoice, "Delete", Context).ToString().ToLower(), review: @PermissionHelper.Can((int)Screens.Invoice, "Review", Context).ToString().ToLower(), print: @PermissionHelper.Can((int)Screens.Invoice, "Print", Context).ToString().ToLower() };
+        const CAN_REVIEW = @((canReview) ? "true" : "false");
+
+        function costcenterChanged() {
+            const cc = document.getElementById("costcenter").value;
+            if (!cc) return;
+            fetch(`/Invoice/GetInvoiceCodes?costCenterId=${cc}`)
+                .then(r => r.json())
+                .then(data => {
+                    const list = document.getElementById("invoiceCodesList");
+                    list.innerHTML = "";
+                    data.forEach(code => {
+                        const opt = document.createElement("option");
+                        opt.value = code;
+                        list.appendChild(opt);
+                    });
+                });
+        }
+
+        function invoiceCodeInput() {
+            // Can be used for real-time validation or triggering summary
+        }
+
+        function safeAction(action, fn) { if (!PERMS[action]) return alert("غير مسموح لك"); fn(); }
+        function payForChanged() { const opt = document.getElementById("payFor").selectedOptions[0]; if (!opt) return; document.getElementById("factor").value = opt.dataset.factor || ""; document.getElementById("factorValue").value = opt.dataset.value || 0; calcNet(); }
+        function calcNet() { const total = parseFloat(document.getElementById("total").value || 0); const factor = (document.getElementById("factor").value || "").trim(); const val = parseFloat(document.getElementById("factorValue").value || 0); let net = 0; if (factor === "*") net = total * val; else if (factor === "%") net = total * val / 100; document.getElementById("net").value = isFinite(net) ? net.toFixed(2) : "0.00"; }
+
+        function selectRow(tr) {
+            document.querySelectorAll("tbody tr").forEach(r => r.classList.remove("selected-row")); tr.classList.add("selected-row");
+            const d = tr.dataset;
+            document.getElementById("Invoice_id").value = d.id;
+            document.getElementById("invoiceCode").value = d.invoicecode;
+            document.getElementById("invoiceType").value = d.invoicetype;
+            document.getElementById("invDate").value = d.date;
+            document.getElementById("costcenter").value = d.costcenterid;
+            document.getElementById("payFor").value = d.payforid;
+            document.getElementById("factor").value = d.factor;
+            document.getElementById("factorValue").value = d.factorvalue;
+            document.getElementById("total").value = d.balance;
+            document.getElementById("net").value = d.net;
+            document.getElementById("isRefundTrue").checked = (d.isrefund === "true");
+            refreshInvoiceSummary();
+        }
+
+        function showList() { const cc = document.getElementById("costcenter").value; if (!cc) return alert("اختر الموقع"); location.href = `?showList=true&Invoice_costcenterId=${cc}&Invoice_date=${document.getElementById("invDate").value}`; }
+        function newInvoice() { location.href = location.pathname; }
+        function saveInvoice() { if (!confirm("حفظ؟")) return; document.getElementById("Invoice_id").value = 0; document.getElementById("invoiceForm").submit(); }
+        function editInvoice() { if (document.getElementById("Invoice_id").value == 0) return alert("اختر صف"); document.getElementById("invoiceForm").submit(); }
+        function deleteInvoice() { const id = document.getElementById("Invoice_id").value; if (id == 0) return alert("اختر صف"); if (confirm("حذف؟")) location.href = `/Invoice/Delete/${id}?showList=true`; }
+        function exportExcel() { window.location.href = `/Invoice/ExportExcel?costCenterId=${document.getElementById("costcenter").value}`; }
+
+        function reviewClicked() {
+            if (!CAN_REVIEW) {
+                alert("ليس لديك صلاحية");
+                return;
+            }
+            toggleReview();
+        }
+
+        function toggleReview() {
+            if (!CAN_REVIEW) {
+                alert("ليس لديك صلاحية");
+                return;
+            }
+
+            const row = document.querySelector("tbody tr.selected-row");
+            if (!row) return alert("اختار صف الأول");
+
+            const id = parseInt(row.dataset.id);
+            const isReviewed = row.dataset.reviewed === "true";
+
+            const msg = isReviewed
+                ? "هل تريد إلغاء المراجعة؟"
+                : "هل تريد اعتماد هذا الصف كمراجع؟";
+
+            if (!confirm(msg)) return;
+
+            fetch("/Invoice/Review", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: id, reviewed: !isReviewed })
+            })
+            .then(r => {
+                if (!r.ok) return r.text().then(t => { throw t; });
+                return r.json();
+            })
+            .then(() => {
+                row.dataset.reviewed = (!isReviewed).toString();
+                row.querySelector(".cell-check").checked = !isReviewed;
+                row.classList.toggle("reviewed", !isReviewed);
+                alert(!isReviewed ? "تمت المراجعة بنجاح" : "تم إلغاء المراجعة");
+            })
+            .catch(e => alert(e));
+        }
+
+
+        function refreshInvoiceSummary() {
+            const cc = document.getElementById("costcenter").value, code = document.getElementById("invoiceCode").value;
+            if (!cc || !code) return;
+            fetch(`/Invoice/GetInvoiceSummary?costCenterId=${cc}&invoiceCode=${encodeURIComponent(code)}`).then(r => r.json()).then(data => {
+                if(data.ok) {
+                    document.getElementById("lblTotalDeduction").textContent = `إجمالى قيمة الاستقطاعات: ${Number(data.totalDeduction).toFixed(2)}`;
+                    document.getElementById("lblRemains").textContent = `المتبقي: ${Number(data.remains).toFixed(2)}`;
+
+                    // Match desktop: update total if it exists
+                    if (data.balance > 0) {
+                        document.getElementById("total").value = data.balance;
+                        calcNet();
+                    }
+                } else {
+                    document.getElementById("lblTotalDeduction").textContent = "إجمالى قيمة الاستقطاعات: -";
+                    document.getElementById("lblRemains").textContent = "المتبقي: -";
+                }
+            });
+        }
+
+        document.querySelectorAll(".search-input").forEach(input => {
+            input.addEventListener("input", function () {
+                const col = parseInt(this.dataset.col), val = this.value.toLowerCase();
+                document.querySelectorAll("#invTable tbody tr").forEach(row => {
+                    const cellVal = row.cells[col].innerText.toLowerCase();
+                    row.style.display = val === "" || cellVal.includes(val) ? "" : "none";
+                });
+            });
+        });
+    </script>
+</body>
+</html>
